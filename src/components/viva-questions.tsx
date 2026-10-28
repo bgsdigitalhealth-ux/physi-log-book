@@ -1,3 +1,4 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2 } from "lucide-react";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 type Q = { id: string; category: string; question: string };
 
 export function VivaQuestions({ editable }: { editable: boolean }) {
+  const webText = useWebText();
   const qc = useQueryClient();
   const { data = [] } = useQuery({
     queryKey: ["viva-questions"],
@@ -49,28 +51,28 @@ export function VivaQuestions({ editable }: { editable: boolean }) {
       <div className="flex flex-wrap gap-1">
         {JOURNAL_CATEGORIES.map((c) => (
           <Button key={c} size="sm" variant={cat === c ? "secondary" : "ghost"} className={cn(cat === c && "text-primary")} onClick={() => setCat(c)}>
-            {c} ({data.filter((q) => q.category === c).length})
+            {webText(c)} ({data.filter((q) => q.category === c).length})
           </Button>
         ))}
       </div>
       {editable ? (
         <div className="flex items-start gap-2">
-          <Textarea aria-label="New viva question" rows={2} placeholder="Type a viva question…" value={text} onChange={(e) => setText(e.target.value)} />
-          <Button disabled={add.isPending} onClick={() => add.mutate()}><Plus />Add</Button>
+          <Textarea aria-label={webText("New viva question")} rows={2} placeholder={webText("Type a viva question…")} value={text} onChange={(e) => setText(e.target.value)} />
+          <Button disabled={add.isPending} onClick={() => add.mutate()}><Plus /><WebText text={"Add"} /></Button>
         </div>
       ) : null}
       {list.length ? (
         <ol className="divide-y divide-border rounded-lg border border-border">
           {list.map((q, i) => (
             <li key={q.id} className="flex items-start gap-3 px-4 py-3 text-sm">
-              <span className="font-semibold">Q{i + 1}.</span>
+              <span className="font-semibold"><WebText text={"Q"} />{i + 1}.</span>
               <span className="flex-1 whitespace-pre-wrap">{q.question}</span>
               {editable ? <Button variant="ghost" size="icon" aria-label={`Delete question ${i + 1}`} onClick={() => remove.mutate(q.id)} className="text-destructive"><Trash2 /></Button> : null}
             </li>
           ))}
         </ol>
       ) : (
-        <p className="text-sm text-muted-foreground">No viva questions in this category yet.</p>
+        <p className="text-sm text-muted-foreground"><WebText text={"No viva questions in this category yet."} /></p>
       )}
     </div>
   );

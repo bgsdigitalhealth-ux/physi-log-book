@@ -1,3 +1,4 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -31,6 +32,8 @@ import { ProfilePhoto } from "@/components/profile-photo";
 import { VivaQuestions } from "@/components/viva-questions";
 import { submissionWindowOptions, windowState } from "@/lib/submission-window";
 import { internalBlockStats } from "@/lib/internal-blocks";
+import { assessmentMaximum } from "@/lib/assessment";
+import { publishedPracticals } from "@/lib/published-practicals";
 
 type Practical = {
   code: string;
@@ -148,10 +151,12 @@ export const Route = createFileRoute("/_authenticated/student")({
 
 
 function StudentPage() {
+  const webText = useWebText();
   const [view, setView] = useState("dashboard-overview");
   const auth = useSuspenseQuery(authContextOptions);
-  const practicals = useSuspenseQuery(studentQueryOptions.practicals());
+  const catalog = useSuspenseQuery(studentQueryOptions.practicals());
   const templates = useSuspenseQuery(studentQueryOptions.templates());
+  const practicals = { data: publishedPracticals(catalog.data, templates.data) };
   const sessions = useSuspenseQuery(studentQueryOptions.sessions());
   const profile = auth.data.profile;
   const userId = auth.data.userId;
@@ -208,7 +213,8 @@ function StudentPage() {
   const byCode = new Map(practicals.data.map((p) => [p.code, p]));
   const subByCode = new Map(submissions.data.map((s) => [s.practical_code, s]));
   const statusOf = (code: string) => subByCode.get(code)?.status ?? "pending";
-  const approved = submissions.data.filter((s) => s.status === "approved");
+  const availableCodes = new Set(practicals.data.map(p => p.code));
+  const approved = submissions.data.filter((s) => s.status === "approved" && availableCodes.has(s.practical_code));
   const corrections = submissions.data.filter(
     (s) => s.status === "correction",
   );
@@ -282,18 +288,16 @@ function StudentPage() {
         <div className="space-y-6">
           <div>
             <p className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-              MBBS Phase I • Department of Physiology • AY 2026-27
-            </p>
+              <WebText text={"MBBS Phase I • Department of Physiology • AY 2026-27"} /></p>
             <h1 className="mt-1 font-display text-3xl font-extrabold">
-              Welcome back, {profile?.full_name || "Student"}
+              <WebText text={"Welcome back,"} />{profile?.full_name || "Student"}
             </h1>
           </div>
 
           {held ? (
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                <Lock className="size-4" /> Your record access is on hold
-              </p>
+                <Lock className="size-4" /> <WebText text={"Your record access is on hold"} /></p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {profile?.hold_reason ??
                   "Your faculty has placed your practical record access on hold (for example due to absence). Please contact your faculty mentor to resume."}
@@ -303,36 +307,36 @@ function StudentPage() {
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Metric
-              label="Assigned Practicals"
+              label={webText("Assigned Practicals")}
               value={`${practicals.data.length} Total`}
-              note="Hematology, Clinical, Human Exp, Amphibian, Demo"
+              note={webText("Hematology, Clinical, Human Exp, Amphibian, Demo")}
               onClick={() => setView("assigned-practicals")}
             />
             <Metric
-              label="Pending Entries"
+              label={webText("Pending Entries")}
               value={`${pending.length} Due`}
-              note="Submit on the day of your session"
+              note={webText("Submit on the day of your session")}
               tone="warning"
               onClick={() => setView("assigned-practicals")}
             />
             <Metric
-              label="Corrections Required"
+              label={webText("Corrections Required")}
               value={`${corrections.length} Records`}
-              note="Faculty returned with feedback"
+              note={webText("Faculty returned with feedback")}
               tone="danger"
               onClick={() => setView("submission-status")}
             />
             <Metric
-              label="Approved & Certified"
+              label={webText("Approved & Certified")}
               value={`${approved.length} Certified`}
-              note="Signed by faculty evaluator"
+              note={webText("Signed by faculty evaluator")}
               tone="success"
               onClick={() => setView("download-print")}
             />
           </div>
 
           <Section
-            title="Internal-wise Record Completion & Eligibility"
+            title={webText("Internal-wise Record Completion & Eligibility")}
           >
             <div className="space-y-3">
               {blockStats.map((b) => (
@@ -344,11 +348,10 @@ function StudentPage() {
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="font-mono text-muted-foreground">
-                        {b.approved}/{b.total} certified
-                      </span>
+                        {b.approved}/{b.total} <WebText text={"certified"} /></span>
                       <span className={cn("inline-flex items-center gap-1 font-semibold", b.eligible && !held ? "text-success" : "text-muted-foreground")}>
                         {b.eligible && !held ? <Check className="size-3.5" /> : <Lock className="size-3.5" />}
-                        {held ? "On hold" : b.eligible ? "Eligible" : "Not eligible"}
+                        {held ? webText("On hold") : b.eligible ? webText("Eligible") : webText("Not eligible")}
                       </span>
                     </div>
                   </div>
@@ -366,27 +369,24 @@ function StudentPage() {
           </Section>
 
           <Section
-            title="Record Submission Window"
-            description="Faculty-set dates for accepting practical records."
+            title={webText("Record Submission Date")}
+            description={webText("Faculty-set dates for accepting practical records.")}
           >
             {!win.configured ? (
               <p className="text-sm text-muted-foreground">
-                Your faculty has not announced the record submission dates yet.
-              </p>
+                <WebText text={"Your faculty has not announced the record submission dates yet."} /></p>
             ) : (
               <div className="flex flex-wrap items-center gap-4">
                 <div>
                   <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Submission Starts
-                  </p>
+                    <WebText text={"Submission Starts"} /></p>
                   <p className="font-display text-lg font-bold">
                     {submissionWindow.data.start_date ?? "—"}
                   </p>
                 </div>
                 <div>
                   <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Last Date of Submission
-                  </p>
+                    <WebText text={"Last Date of Submission"} /></p>
                   <p className="font-display text-lg font-bold">
                     {submissionWindow.data.end_date ?? "—"}
                   </p>
@@ -402,24 +402,22 @@ function StudentPage() {
                   )}
                 >
                   {win.closed
-                    ? "Submissions closed"
+                    ? webText("Submissions closed")
                     : win.notStarted
-                      ? "Opens soon"
+                      ? webText("Opens soon")
                       : win.daysLeft != null
                         ? `Open — ${win.daysLeft} day${win.daysLeft === 1 ? "" : "s"} left`
-                        : "Open"}
+                        : webText("Open")}
                 </span>
               </div>
             )}
           </Section>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <Section title="Action Items (Corrections & Deadlines)">
+            <Section title={webText("Action Items (Corrections & Deadlines)")}>
               {corrections.length === 0 && pending.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Nothing outstanding. All submitted records are with your
-                  faculty.
-                </p>
+                  <WebText text={"Nothing outstanding. All submitted records are with your faculty."} /></p>
               ) : (
                 <ul className="space-y-3">
                   {[
@@ -443,7 +441,7 @@ function StudentPage() {
                         <span className="mt-0.5 text-warning">⚠️</span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-semibold">
-                            {title}
+                            {webText(title)}
                           </span>
                           <span className="block text-xs text-muted-foreground">
                             {row.remarks ?? "Awaiting your entry"}
@@ -455,8 +453,7 @@ function StudentPage() {
                           }}
                           className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                         >
-                          Fix Now
-                        </button>
+                          <WebText text={"Fix Now"} /></button>
                       </li>
                     );
                   })}
@@ -465,20 +462,19 @@ function StudentPage() {
             </Section>
 
             <Section
-              title="Upcoming Sessions"
+              title={webText("Upcoming Sessions")}
               actions={
                 <button
                   onClick={() => setView("attendance")}
                   className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                 >
-                  View All ({sessions.data.length})
+                  <WebText text={"View All ("} />{sessions.data.length})
                 </button>
               }
             >
               {upcomingSessions.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  No upcoming sessions scheduled right now.
-                </p>
+                  <WebText text={"No upcoming sessions scheduled right now."} /></p>
               ) : (
                 <ul className="space-y-3">
                   {upcomingSessions.slice(0, 4).map((s) => (
@@ -514,11 +510,10 @@ function StudentPage() {
 
       {view === "practical-entry" ? (
         held ? (
-          <Section title="Digital Practical Entry & Recording Lab">
+          <Section title={webText("Practical Record Lab")}>
             <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                <Lock className="size-4" /> Record entry is on hold
-              </p>
+                <Lock className="size-4" /> <WebText text={"Record entry is on hold"} /></p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {profile?.hold_reason ??
                   "Your faculty has placed your practical record access on hold. Please contact your faculty mentor to resume."}
@@ -583,7 +578,7 @@ function StudentPage() {
       ) : null}
 
       {view === "viva-questions" ? (
-        <Section title="Viva Questions">
+        <Section title={webText("Viva Questions")}>
           <VivaQuestions editable={false} />
         </Section>
       ) : null}
@@ -618,6 +613,7 @@ function ProfileView({
   profile: Profile | null;
   userId: string;
 }) {
+  const webText = useWebText();
   const [form, setForm] = useState({
     full_name: profile?.full_name ?? "",
     roll_number: profile?.roll_number ?? "",
@@ -680,15 +676,14 @@ function ProfileView({
 
   return (
     <Section
-      title="Student Academic Profile"
-      description="Details are matched to your batch roster and practical journal."
+      title={webText("Student Academic Profile")}
+      description={webText("Details are matched to your batch roster and practical journal.")}
       actions={
         <button
           onClick={() => save.mutate()}
           className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          Save Changes
-        </button>
+          <WebText text={"Save Changes"} /></button>
       }
     >
       <div className="mb-5 flex items-center gap-4 rounded-lg border border-border p-4">
@@ -698,15 +693,15 @@ function ProfileView({
           className="size-16"
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Profile Photo</p>
+          <p className="text-sm font-semibold"><WebText text={"Profile Photo"} /></p>
         </div>
         <label className="cursor-pointer">
           <span className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
             <Camera className="size-3.5" />
-            {uploading ? "Uploading…" : photoPath ? "Change Photo" : "Upload Photo"}
+            {uploading ? webText("Uploading…") : photoPath ? webText("Change Photo") : webText("Upload Photo")}
           </span>
           <input
-            aria-label="Upload profile photo"
+            aria-label={webText("Upload profile photo")}
             type="file"
             accept="image/png,image/jpeg,image/webp"
             className="sr-only"
@@ -730,7 +725,7 @@ function ProfileView({
         ] as [string, string][]).map(([label, key]) => (
           <label key={key} className="block sm:col-span-1">
             <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-              {label}
+              {webText(label)}
             </span>
             <input
               value={(form as Record<string, string>)[key] ?? ""}
@@ -743,23 +738,21 @@ function ProfileView({
         ))}
         <label className="block">
           <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Gender
-          </span>
+            <WebText text={"Gender"} /></span>
           <select
             value={form.gender}
             onChange={(e) => setForm({ ...form, gender: e.target.value })}
             className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
           >
-            <option value="">Select gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
+            <option value=""><WebText text={"Select gender"} /></option>
+            <option value="Male"><WebText text={"Male"} /></option>
+            <option value="Female"><WebText text={"Female"} /></option>
+            <option value="Other"><WebText text={"Other"} /></option>
           </select>
         </label>
         <label className="block">
           <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Official Student Email
-          </span>
+            <WebText text={"Official Student Email"} /></span>
           <input
             value={profile?.email ?? ""}
             readOnly
@@ -786,6 +779,7 @@ function AssignedPracticals({
   onEnter: () => void;
   onView: () => void;
 }) {
+  const webText = useWebText();
   const [category, setCategory] = useState<string | null>(null);
   const [status, setStatus] = useState("all");
   const subByCode = new Map(submissions.map((s) => [s.practical_code, s]));
@@ -801,7 +795,7 @@ function AssignedPracticals({
       (CAT_ORDER.indexOf(a) === -1 ? 99 : CAT_ORDER.indexOf(a)) -
       (CAT_ORDER.indexOf(b) === -1 ? 99 : CAT_ORDER.indexOf(b)),
   );
-  const activeCategory = category ?? cats[0];
+  const activeCategory = category && cats.includes(category) ? category : cats[0];
   const countByCat = new Map<string, number>();
   for (const p of practicals)
     countByCat.set(p.category, (countByCat.get(p.category) ?? 0) + 1);
@@ -814,7 +808,7 @@ function AssignedPracticals({
   });
 
   return (
-    <Section title="Assigned Physiology Practicals">
+    <Section title={webText("Assigned Physiology Practicals")}>
       <div className="mb-4 flex flex-wrap gap-2">
         {cats.map((c) => (
           <button
@@ -827,14 +821,13 @@ function AssignedPracticals({
                 : "border-border hover:bg-secondary",
             )}
           >
-            {c} ({countByCat.get(c) ?? 0})
+            {webText(c)} ({countByCat.get(c) ?? 0})
           </button>
         ))}
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
         <span className="font-mono tracking-widest text-muted-foreground uppercase">
-          Status:
-        </span>
+          <WebText text={"Status:"} /></span>
         {([
           ["all", "All"],
           ["pending", "Pending"],
@@ -852,7 +845,7 @@ function AssignedPracticals({
                 : "border-border hover:bg-secondary",
             )}
           >
-            {l}
+            {webText(l)}
           </button>
         ))}
       </div>
@@ -861,12 +854,12 @@ function AssignedPracticals({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Code</th>
-              <th className="py-2 pr-3">Practical Experiment Title</th>
-              <th className="py-2 pr-3">Category</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2 pr-3">Marks</th>
-              <th className="py-2 pr-3">Action</th>
+              <th className="py-2 pr-3"><WebText text={"Code"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Practical Experiment Title"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Category"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Marks"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Action"} /></th>
             </tr>
           </thead>
           <tbody>
@@ -887,30 +880,28 @@ function AssignedPracticals({
                   <td className="py-2.5 pr-3">
                     {locked ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground uppercase">
-                        <Lock className="size-3" /> Locked
-                      </span>
+                        <Lock className="size-3" /> <WebText text={"Locked"} /></span>
                     ) : (
                       <StatusBadge status={st} />
                     )}
                   </td>
                   <td className="py-2.5 pr-3 font-mono text-xs">
-                    {sub?.marks != null ? `${sub.marks}/${sub.max_marks}` : "—"}
+                    {sub?.marks != null ? `${sub.marks}/${sub.max_marks}` : webText("—")}
                   </td>
                   <td className="py-2.5 pr-3">
                     {locked ? (
                       <span
                         className="text-xs text-muted-foreground"
-                        title="Complete the previous practical and get it approved by faculty to unlock this one."
+                        title={webText("Complete the previous practical and get it approved by faculty to unlock this one.")}
                       >
-                        Unlock after previous approval
-                      </span>
+                        <WebText text={"Unlock after previous approval"} /></span>
                     ) : (
                       <button
                         onClick={st === "approved" ? onView : onEnter}
                         disabled={held && st !== "approved"}
                         className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {st === "approved" ? "View" : "Enter"}
+                        {st === "approved" ? webText("View") : webText("Enter")}
                       </button>
                     )}
                   </td>
@@ -948,9 +939,11 @@ function PracticalEntry({
   profile: Profile | null;
   onDone: () => void;
 }) {
-  const existing = submissions[0];
-  const [code, setCode] = useState(existing?.practical_code ?? practicals[0]?.code ?? "");
-  const codeLocked = lockedCodes.has(code);
+  const webText = useWebText();
+  const existing = submissions.find(s => practicals.some(p => p.code === s.practical_code));
+  const [selectedCode, setCode] = useState(existing?.practical_code ?? practicals[0]?.code ?? "");
+  const code = practicals.some(p => p.code === selectedCode) ? selectedCode : practicals[0]?.code ?? "";
+  const codeLocked = !code || lockedCodes.has(code);
   const template = templates.find((t) => t.code === code);
   const current = submissions.find((s) => s.practical_code === code);
   const saved = (current?.entry ?? {}) as Record<string, unknown>;
@@ -1023,6 +1016,8 @@ function PracticalEntry({
 
   const save = useMutation({
     mutationFn: async (status: string) => {
+      if (!template || template.status !== "Published" || !practicals.some(p => p.code === code)) throw new Error("This practical is no longer published.");
+      if (codeLocked) throw new Error("This practical is locked.");
       const entry = {
         aim: template?.aim ?? "",
         apparatus: template?.apparatus ?? "",
@@ -1038,7 +1033,7 @@ function PracticalEntry({
         practical_code: code,
         status,
         entry,
-        max_marks: template?.max_marks ?? 20,
+        max_marks: assessmentMaximum(current?.max_marks, template?.max_marks),
         submitted_at: status === "review" ? new Date().toISOString() : null,
       };
       const { error } = current
@@ -1068,11 +1063,10 @@ function PracticalEntry({
     return (
         <div className="mt-6 space-y-4 border-t border-border pt-4">
           <div className="flex flex-wrap items-center gap-3">
-            <p className="font-display text-sm font-bold">Attached Images & PDFs</p>
+            <p className="font-display text-sm font-bold"><WebText text={"Attached Images & PDFs"} /></p>
             <label className="ml-auto cursor-pointer">
               <span className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
-                <Upload className="size-3.5" /> Upload Image or PDF
-              </span>
+                <Upload className="size-3.5" /> <WebText text={"Upload Image or PDF"} /></span>
               <input
                 aria-label={`Upload ${section} file`}
                 type="file"
@@ -1087,10 +1081,9 @@ function PracticalEntry({
             </label>
           </div>
           <p className="text-xs text-muted-foreground">
-            PNG, JPG, WebP or PDF, up to 10 MB each. Save the entry to keep files.
-          </p>
+            <WebText text={"PNG, JPG, WebP or PDF, up to 10 MB each. Save the entry to keep files."} /></p>
           {list.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No files attached to this entry yet.</p>
+            <p className="text-sm text-muted-foreground"><WebText text={"No files attached to this entry yet."} /></p>
           ) : (
             <ul className="divide-y divide-border rounded-lg border border-border">
               {list.map((a) => (
@@ -1098,18 +1091,16 @@ function PracticalEntry({
                   <Paperclip className="size-4 shrink-0 text-primary" />
                   <span className="min-w-0 flex-1 truncate text-sm">{a.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    {(a.size / 1024).toFixed(0)} KB
-                  </span>
+                    {(a.size / 1024).toFixed(0)} <WebText text={"KB"} /></span>
                   <button
                     onClick={() => void viewFile(a.path)}
                     className="text-xs font-semibold text-primary hover:underline"
                   >
-                    View
-                  </button>
+                    <WebText text={"View"} /></button>
                   <button
                     onClick={() => void removeFile(a)}
                     aria-label={`Remove ${a.name}`}
-                    title="Remove attachment"
+                    title={webText("Remove attachment")}
                     className="text-destructive hover:opacity-80"
                   >
                     <Trash2 className="size-4" />
@@ -1124,8 +1115,8 @@ function PracticalEntry({
 
   return (
     <Section
-      title="Digital Practical Entry & Recording Lab"
-      description="Enter clinical background, observation tables, formulas and viva responses."
+      title={webText("Practical Record Lab")}
+      description={webText("Enter clinical background, observation tables, formulas and viva responses.")}
       actions={
         <>
           <button
@@ -1133,25 +1124,23 @@ function PracticalEntry({
             disabled={codeLocked}
             className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Save Draft
-          </button>
+            <WebText text={"Save Draft"} /></button>
           <button
             onClick={() => save.mutate("review")}
             disabled={codeLocked || !submissionOpen}
             title={windowNote ?? undefined}
             className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Send className="size-3.5" /> Submit for Review
-          </button>
+            <Send className="size-3.5" /> <WebText text={"Submit for Review"} /></button>
         </>
       }
     >
       <div className="grid gap-4 sm:grid-cols-3">
         <label className="block sm:col-span-2">
           <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Choose Practical Experiment
-          </span>
+            <WebText text={"Choose Practical Experiment"} /></span>
           <select
+            aria-label={webText("Choose Practical Experiment")}
             value={code}
             onChange={(e) => {
               const nextCode = e.target.value;
@@ -1172,15 +1161,15 @@ function PracticalEntry({
             {practicals.map((p) => (
               <option key={p.code} value={p.code} disabled={lockedCodes.has(p.code)}>
                 {p.code}: {p.title}
-                {lockedCodes.has(p.code) ? " (Locked)" : ""}
+                {lockedCodes.has(p.code) ? webText(" (Locked)") : ""}
               </option>
             ))}
+            {!practicals.length && <option value=""><WebText text={"No published practical records"} /></option>}
           </select>
         </label>
         <label className="block">
           <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Subject Details
-          </span>
+            <WebText text={"Subject Details"} /></span>
           <input
             readOnly
             value={`${profile?.full_name ?? "Student"} • Roll ${profile?.roll_number ?? "—"}`}
@@ -1192,12 +1181,9 @@ function PracticalEntry({
       {codeLocked ? (
         <div className="mt-4 rounded-lg border border-border bg-secondary/50 p-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
-            <Lock className="size-4" /> This experiment is locked
-          </p>
+            <Lock className="size-4" /> <WebText text={"This experiment is locked"} /></p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Complete the previous practical and get it approved by your faculty
-            to unlock this experiment.
-          </p>
+            <WebText text={"Complete the previous practical and get it approved by your faculty to unlock this experiment."} /></p>
         </div>
       ) : null}
 
@@ -1224,14 +1210,14 @@ function PracticalEntry({
                 : "text-muted-foreground hover:bg-secondary",
             )}
           >
-            {label}
+            {webText(label)}
           </button>
         ))}
       </div>
 
       {tab === "theory" ? (
         <div className="mt-5 space-y-4">
-          {[["Aim",template?.aim], ["Principle",template?.principle], ["Apparatus",template?.apparatus], ["Procedure",template?.procedure]].map(([label,value]) => <section key={label}><h3 className="text-sm font-semibold text-primary">{label}</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{value || "No published content yet."}</p></section>)}
+          {[["Aim",template?.aim], ["Principle",template?.principle], ["Apparatus",template?.apparatus], ["Procedure",template?.procedure]].map(([label,value]) => <section key={label}><h3 className="text-sm font-semibold text-primary">{webText(label)}</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6">{value || "No published content yet."}</p></section>)}
           {template?.reference_image && <figure><img src={template.reference_image} alt={template.reference_caption || 'Practical reference diagram'} className="mx-auto max-h-80 max-w-full object-contain"/><figcaption className="mt-2 text-center text-xs text-muted-foreground">{template.reference_caption}</figcaption></figure>}
         </div>
       ) : null}
@@ -1240,8 +1226,7 @@ function PracticalEntry({
         <div className="mt-5">
           <div className="mb-3 flex items-center gap-3">
             <p className="font-display text-sm font-bold">
-              Table: Structured Observations
-            </p>
+              <WebText text={"Table: Structured Observations"} /></p>
             <button
               onClick={() =>
                 setRows((r) => [
@@ -1255,8 +1240,7 @@ function PracticalEntry({
               }
               className="ml-auto rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
             >
-              Add Row
-            </button>
+              <WebText text={"Add Row"} /></button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1268,7 +1252,7 @@ function PracticalEntry({
                       {c.unit && c.unit !== "-" ? ` (${c.unit})` : ""}
                     </th>
                   ))}
-                  <th className="py-2">Action</th>
+                  <th className="py-2"><WebText text={"Action"} /></th>
                 </tr>
               </thead>
               <tbody>
@@ -1288,8 +1272,7 @@ function PracticalEntry({
                         onClick={() => setRows((prev) => prev.filter((_, k) => k !== i))}
                         className="text-xs font-semibold text-destructive hover:underline"
                       >
-                        Delete
-                      </button>
+                        <WebText text={"Delete"} /></button>
                     </td>
                   </tr>
                 ))}
@@ -1297,8 +1280,7 @@ function PracticalEntry({
             </table>
             {!template ? (
               <p className="text-sm text-muted-foreground">
-                No observation schema is published for this practical yet.
-              </p>
+                <WebText text={"No observation schema is published for this practical yet."} /></p>
             ) : null}
           </div>
           {renderUploads("observations")}
@@ -1307,9 +1289,9 @@ function PracticalEntry({
 
       {tab === "calculations" ? (
         <div className="mt-5 space-y-4">
-          <section><h3 className="text-sm font-semibold text-primary">Calculations / Formula</h3><p className="mt-2 whitespace-pre-wrap text-sm">{template?.formula || "No calculation formula published for this practical."}</p></section>
+          <section><h3 className="text-sm font-semibold text-primary"><WebText text={"Calculations / Formula"} /></h3><p className="mt-2 whitespace-pre-wrap text-sm">{template?.formula || "No calculation formula published for this practical."}</p></section>
           <Area
-            label="Calculation Steps & Observations"
+            label={webText("Calculation Steps & Observations")}
             value={calcNotes}
             onChange={setCalcNotes}
             rows={5}
@@ -1321,20 +1303,19 @@ function PracticalEntry({
       {tab === "inference" ? (
         <div className="mt-5 space-y-4">
           <Area
-            label="Physiological Inference & Clinical Significance"
+            label={webText("Physiological Inference & Clinical Significance")}
             value={inference}
             onChange={setInference}
             rows={4}
           />
           <div>
             <p className="mb-3 font-display text-sm font-bold">
-              Self-Assessment Questions
-            </p>
+              <WebText text={"Self-Assessment Questions"} /></p>
             <div className="space-y-3">
               {(template?.viva_questions ?? []).map((q, i) => (
                 <label key={i} className="block">
                   <span className="mb-1.5 block text-xs font-semibold">
-                    Q{i + 1}. {q}
+                    <WebText text={"Q"} />{i + 1}. {q}
                   </span>
                   <textarea
                     rows={2}
@@ -1348,8 +1329,7 @@ function PracticalEntry({
               ))}
               {!template?.viva_questions?.length ? (
                 <p className="text-sm text-muted-foreground">
-                  No viva prompts are published for this practical yet.
-                </p>
+                  <WebText text={"No viva prompts are published for this practical yet."} /></p>
               ) : null}
             </div>
           </div>
@@ -1371,10 +1351,11 @@ function Area({
   onChange: (v: string) => void;
   rows: number;
 }) {
+  const webText = useWebText();
   return (
     <label className="block">
       <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        {label}
+        {webText(label)}
       </span>
       <textarea
         rows={rows}
@@ -1395,29 +1376,29 @@ function SubmissionStatus({
   byCode: Map<string, Practical>;
   onResubmit: () => void;
 }) {
+  const webText = useWebText();
   return (
     <Section
-      title="Submission Status & Faculty Reviews"
-      description="Submissions audit trail with faculty remarks and marks."
+      title={webText("Submission Status & Faculty Reviews")}
+      description={webText("Submissions audit trail with faculty remarks and marks.")}
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Practical Experiment</th>
-              <th className="py-2 pr-3">Submitted</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2 pr-3">Marks</th>
-              <th className="py-2 pr-3">Faculty Remarks</th>
-              <th className="py-2">Action</th>
+              <th className="py-2 pr-3"><WebText text={"Practical Experiment"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Submitted"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Marks"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Faculty Remarks"} /></th>
+              <th className="py-2"><WebText text={"Action"} /></th>
             </tr>
           </thead>
           <tbody>
             {submissions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                  No practical submissions logged yet. Submit a record to see it here.
-                </td>
+                  <WebText text={"No practical submissions logged yet. Submit a record to see it here."} /></td>
               </tr>
             ) : (
               submissions.map((s, i) => (
@@ -1427,17 +1408,17 @@ function SubmissionStatus({
                       {byCode.get(s.practical_code)?.title ?? s.practical_code}
                     </span>
                     <span className="font-mono text-[11px] text-muted-foreground">
-                      SUB-2026-{4800 + i}
+                      <WebText text={"SUB-2026-"} />{4800 + i}
                     </span>
                   </td>
                   <td className="py-2.5 pr-3 font-mono text-xs">
-                    {s.submitted_at ? s.submitted_at.slice(0, 10) : "—"}
+                    {s.submitted_at ? s.submitted_at.slice(0, 10) : webText("—")}
                   </td>
                   <td className="py-2.5 pr-3">
                     <StatusBadge status={s.status} />
                   </td>
                   <td className="py-2.5 pr-3 font-mono text-xs">
-                    {s.marks != null ? `${s.marks}/${s.max_marks}` : "—"}
+                    {s.marks != null ? `${s.marks}/${s.max_marks}` : webText("—")}
                   </td>
                   <td className="max-w-xs py-2.5 pr-3 text-xs text-muted-foreground">
                     {s.remarks ?? "—"}
@@ -1447,7 +1428,7 @@ function SubmissionStatus({
                       onClick={onResubmit}
                       className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                     >
-                      {s.status === "correction" ? "Re-Submit" : "Inspect"}
+                      {s.status === "correction" ? webText("Re-Submit") : webText("Inspect")}
                     </button>
                   </td>
                 </tr>
@@ -1473,43 +1454,42 @@ function AttendanceView({
   present: number;
   marked: number;
 }) {
+  const webText = useWebText();
   const byId = new Map(attendance.map((a) => [a.session_id, a.status]));
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label="Attendance" value={`${pct}%`} note="Minimum 80% required" tone={pct >= 80 ? "success" : "danger"} />
-        <Metric label="Sessions Present" value={`${present} / ${marked || sessions.length}`} />
-        <Metric label="Scheduled Ahead" value={`${sessions.filter((s) => s.status === "Scheduled").length}`} note="Upcoming lab sessions" tone="warning" />
+        <Metric label={webText("Attendance")} value={`${pct}%`} note={webText("Minimum 80% required")} tone={pct >= 80 ? "success" : "danger"} />
+        <Metric label={webText("Sessions Present")} value={`${present} / ${marked || sessions.length}`} />
+        <Metric label={webText("Scheduled Ahead")} value={`${sessions.filter((s) => s.status === "Scheduled").length}`} note={webText("Upcoming lab sessions")} tone="warning" />
       </div>
 
-      <Section title="Attendance Criteria Checklist">
+      <Section title={webText("Attendance Criteria Checklist")}>
         <ul className="space-y-2 text-sm">
           <li className="flex items-center gap-2">
             <Check className={cn("size-4", pct >= 80 ? "text-success" : "text-destructive")} />
-            University Minimum Eligibility: 80% — current {pct}%
+            <WebText text={"University Minimum Eligibility: 80% — current"} />{pct}%
           </li>
           <li className="flex items-center gap-2">
             <Check className="size-4 text-success" />
-            Hematology Lab Sessions: {sessions.filter((s) => s.venue?.includes("Hematology")).length} sessions listed
-          </li>
+            <WebText text={"Hematology Lab Sessions:"} />{sessions.filter((s) => s.venue?.includes("Hematology")).length} <WebText text={"sessions listed"} /></li>
           <li className="flex items-center gap-2">
             <Check className="size-4 text-success" />
-            Clinical Physiology: {sessions.filter((s) => !s.venue?.includes("Hematology")).length} sessions listed
-          </li>
+            <WebText text={"Clinical Physiology:"} />{sessions.filter((s) => !s.venue?.includes("Hematology")).length} <WebText text={"sessions listed"} /></li>
         </ul>
       </Section>
 
-      <Section title="Session-wise Attendance Log">
+      <Section title={webText("Session-wise Attendance Log")}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                <th className="py-2 pr-3">Session #</th>
-                <th className="py-2 pr-3">Date</th>
-                <th className="py-2 pr-3">Practical Topic</th>
-                <th className="py-2 pr-3">Venue</th>
-                <th className="py-2 pr-3">Faculty In-Charge</th>
-                <th className="py-2">Attendance Status</th>
+                <th className="py-2 pr-3"><WebText text={"Session #"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Date"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Practical Topic"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Venue"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Faculty In-Charge"} /></th>
+                <th className="py-2"><WebText text={"Attendance Status"} /></th>
               </tr>
             </thead>
             <tbody>
@@ -1549,6 +1529,7 @@ function AnalyticsView({
   completionPct: number;
   attendancePct: number;
 }) {
+  const webText = useWebText();
   const cats = [...new Set(practicals.map((p) => p.category))];
   const data = cats.map((c) => {
     const list = practicals.filter((p) => p.category === c);
@@ -1567,13 +1548,13 @@ function AnalyticsView({
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Average Lab Score" value={`${avgScore} / ${avgMax}`} />
-        <Metric label="Certified Experiments" value={`${submissions.filter((s) => s.status === "approved").length} of ${practicals.length}`} note={`${completionPct}% certified`} />
-        <Metric label="Work in Progress" value={`${submissions.filter((s) => s.status === "review" || s.status === "correction").length} Records`} tone="warning" />
-        <Metric label="Lab Attendance" value={`${attendancePct}%`} tone={attendancePct >= 80 ? "success" : "danger"} />
+        <Metric label={webText("Average Lab Score")} value={`${avgScore} / ${avgMax}`} />
+        <Metric label={webText("Certified Experiments")} value={`${submissions.filter((s) => s.status === "approved").length} of ${practicals.length}`} note={`${completionPct}% certified`} />
+        <Metric label={webText("Work in Progress")} value={`${submissions.filter((s) => s.status === "review" || s.status === "correction").length} Records`} tone="warning" />
+        <Metric label={webText("Lab Attendance")} value={`${attendancePct}%`} tone={attendancePct >= 80 ? "success" : "danger"} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Section title="Category-wise Completion & Marks">
+        <Section title={webText("Category-wise Completion & Marks")}>
           <div className="h-72">
             <ResponsiveContainer>
               <BarChart data={data}>
@@ -1588,7 +1569,7 @@ function AnalyticsView({
             </ResponsiveContainer>
           </div>
         </Section>
-        <Section title="Submission Decisions">
+        <Section title={webText("Submission Decisions")}>
           <div className="h-72">
             <ResponsiveContainer>
               <PieChart>
@@ -1634,6 +1615,7 @@ function FeedbackView({
   submissions: Submission[];
   byCode: Map<string, Practical>;
 }) {
+  const webText = useWebText();
   const growth = useSuspenseQuery(growthStatsOptions);
   const { avg_pct, certified, rank, total_students } = growth.data;
   const stars = Math.max(0, Math.min(5, Math.round(avg_pct / 20)));
@@ -1641,26 +1623,24 @@ function FeedbackView({
   return (
     <div className="space-y-6">
       <Section
-        title="Your Growth"
-        description="Your standing among classmates, based on certified records and marks."
+        title={webText("Your Growth")}
+        description={webText("Your standing among classmates, based on certified records and marks.")}
       >
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-lg border border-border p-4 text-center">
             <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              Your Rank
-            </p>
+              <WebText text={"Your Rank"} /></p>
             <p className="font-display mt-2 text-3xl font-bold">
               #{rank}
               <span className="text-base font-normal text-muted-foreground">
-                {" "}
-                of {total_students}
+                {webText(" ")}
+                <WebText text={"of"} />{total_students}
               </span>
             </p>
           </div>
           <div className="rounded-lg border border-border p-4 text-center">
             <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              Star Rating
-            </p>
+              <WebText text={"Star Rating"} /></p>
             <div className="mt-2 flex items-center justify-center gap-1">
               {[1, 2, 3, 4, 5].map((i) => (
                 <Star
@@ -1675,22 +1655,19 @@ function FeedbackView({
               ))}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
-              {Math.round(avg_pct)}% average score
-            </p>
+              {Math.round(avg_pct)}<WebText text={"% average score"} /></p>
           </div>
           <div className="rounded-lg border border-border p-4 text-center">
             <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              Certified Records
-            </p>
+              <WebText text={"Certified Records"} /></p>
             <p className="font-display mt-2 text-3xl font-bold">{certified}</p>
           </div>
         </div>
       </Section>
-      <Section title="Faculty Remarks">
+      <Section title={webText("Faculty Remarks")}>
         {remarks.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No faculty feedback yet. Remarks appear once your records are reviewed.
-          </p>
+            <WebText text={"No faculty feedback yet. Remarks appear once your records are reviewed."} /></p>
         ) : (
           <ul className="space-y-3">
             {remarks.map((s) => (
@@ -1717,6 +1694,7 @@ function NotificationsView({
   onOpen: (v: string) => void;
   onReload: () => void;
 }) {
+  const webText = useWebText();
   const markAll = async () => {
     const { error } = await supabase
       .from("notifications")
@@ -1728,19 +1706,18 @@ function NotificationsView({
   };
   return (
     <Section
-      title="Academic & Lab Notifications"
+      title={webText("Academic & Lab Notifications")}
       actions={
         <button
           onClick={markAll}
           className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
         >
-          Mark All as Read
-        </button>
+          <WebText text={"Mark All as Read"} /></button>
       }
     >
       <ul className="space-y-3">
         {items.length === 0 ? (
-          <li className="text-sm text-muted-foreground">No notifications yet.</li>
+          <li className="text-sm text-muted-foreground"><WebText text={"No notifications yet."} /></li>
         ) : (
           items.map((n) => (
             <li
@@ -1771,8 +1748,7 @@ function NotificationsView({
                 onClick={() => onOpen(n.action_view ?? "notifications")}
                 className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
               >
-                Open
-              </button>
+                <WebText text={"Open"} /></button>
             </li>
           ))
         )}
@@ -1790,30 +1766,27 @@ function JournalView({
   submissions: Submission[];
   byCode: Map<string, Practical>;
 }) {
+  const webText = useWebText();
   const rows = submissions.filter((s) => s.status === "approved" || s.status === "review");
   return (
     <Section
-      title="Accredited Digital Practical Journal"
+      title={webText("Accredited Digital Practical Journal")}
       actions={
         <button
           onClick={() => window.print()}
           className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          <Printer className="size-3.5" /> Print / Save PDF
-        </button>
+          <Printer className="size-3.5" /> <WebText text={"Print / Save PDF"} /></button>
       }
     >
       <div className="rounded-lg border border-border p-6">
         <div className="text-center">
           <p className="font-display text-lg font-extrabold">
-            BGS MEDICAL COLLEGE HOSPITAL
-          </p>
+            <WebText text={"BGS MEDICAL COLLEGE HOSPITAL"} /></p>
           <p className="font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-            Department of Physiology • MBBS Phase I
-          </p>
+            <WebText text={"Department of Physiology • MBBS Phase I"} /></p>
           <p className="mt-3 font-display text-base font-bold">
-            CERTIFIED DIGITAL PRACTICAL JOURNAL
-          </p>
+            <WebText text={"CERTIFIED DIGITAL PRACTICAL JOURNAL"} /></p>
         </div>
         <div className="mt-5 grid gap-2 text-sm sm:grid-cols-2">
           {[
@@ -1826,36 +1799,31 @@ function JournalView({
           ].map(([l, v]) => (
             <p key={l}>
               <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                {l}
-              </span>{" "}
+                {webText(l)}
+              </span>{webText(" ")}
               <span className="font-semibold">{v}</span>
             </p>
           ))}
         </div>
         <p className="mt-5 text-sm italic">
-          This is to certify that {profile?.full_name || "the student"}, Roll No.{" "}
-          {profile?.roll_number || "—"}, has satisfactorily performed and digitally
-          recorded the prescribed curriculum of practical physiology experiments in
-          the laboratories of BGS Medical College Hospital as mandated by the National
-          Medical Commission (NMC) regulations during the academic year 2026-2027.
-        </p>
+          <WebText text={"This is to certify that"} />{profile?.full_name || "the student"}<WebText text={", Roll No."} />{webText(" ")}
+          {profile?.roll_number || "—"}<WebText text={", has satisfactorily performed and digitally recorded the prescribed curriculum of practical physiology experiments in the laboratories of BGS Medical College Hospital as mandated by the National Medical Commission (NMC) regulations during the academic year 2026-2027."} /></p>
         <div className="mt-5 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
                 <th className="py-2 pr-3">#</th>
-                <th className="py-2 pr-3">Practical Experiment Title</th>
-                <th className="py-2 pr-3">Category</th>
-                <th className="py-2 pr-3">Marks</th>
-                <th className="py-2">Certification</th>
+                <th className="py-2 pr-3"><WebText text={"Practical Experiment Title"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Category"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Marks"} /></th>
+                <th className="py-2"><WebText text={"Certification"} /></th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-6 text-center text-muted-foreground">
-                    No certified records yet.
-                  </td>
+                    <WebText text={"No certified records yet."} /></td>
                 </tr>
               ) : (
                 rows.map((s, i) => (
@@ -1871,7 +1839,7 @@ function JournalView({
                       {s.marks ?? "—"} / {s.max_marks}
                     </td>
                     <td className="py-2 text-xs">
-                      {s.status === "approved" ? "✓ Certified" : "⏳ Submitted for Review"}
+                      {s.status === "approved" ? webText("✓ Certified") : webText("⏳ Submitted for Review")}
                     </td>
                   </tr>
                 ))
@@ -1887,9 +1855,9 @@ function JournalView({
           ].map(([t, s]) => (
             <div key={t} className="rounded-md border border-border p-3">
               <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                {t}
+                {webText(t)}
               </p>
-              <p className="mt-4 border-t border-border pt-1 font-semibold">{s}</p>
+              <p className="mt-4 border-t border-border pt-1 font-semibold">{webText(s)}</p>
             </div>
           ))}
         </div>
@@ -1899,6 +1867,7 @@ function JournalView({
 }
 
 function ResourcesView() {
+  const webText = useWebText();
   const cards = [
     {
       title: "NMC Competency-Based Practical Manual",
@@ -1924,20 +1893,20 @@ function ResourcesView() {
   ];
   return (
     <div className="space-y-6">
-      <Section title="Physiology Learning Resources & Guidelines">
+      <Section title={webText("Physiology Learning Resources & Guidelines")}>
         <div className="grid gap-4 lg:grid-cols-3">
           {cards.map((c) => (
             <div key={c.title} className="rounded-lg border border-border p-5">
-              <p className="font-display text-sm font-bold">{c.title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{c.copy}</p>
+              <p className="font-display text-sm font-bold">{webText(c.title)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{webText(c.copy)}</p>
               <p className="mt-3 font-mono text-[10px] tracking-wide text-muted-foreground uppercase">
-                {c.meta}
+                {webText(c.meta)}
               </p>
               <button
                 onClick={() => toast.warning(c.warn)}
                 className="mt-4 w-full rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
               >
-                {c.action}
+                {webText(c.action)}
               </button>
             </div>
           ))}

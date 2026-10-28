@@ -1,3 +1,4 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +28,7 @@ export function AppShell({
   search,
   children,
 }: Props) {
+  const webText = useWebText();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const items = navFor(role);
@@ -49,28 +51,24 @@ export function AppShell({
       >
         <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary font-display text-sm font-bold text-sidebar-primary-foreground">
-            BG
-          </div>
+            <WebText text={"BG"} /></div>
           <div className="min-w-0">
             <p className="truncate font-display text-sm font-bold leading-tight">
-              BGS Medical College
-            </p>
+              <WebText text={"BGS Medical College"} /></p>
             <p className="truncate text-[11px] text-sidebar-muted">
-              Dept. of Physiology
-            </p>
+              <WebText text={"Dept. of Physiology"} /></p>
           </div>
           <button
             className="ml-auto lg:hidden"
             onClick={() => setOpen(false)}
-            aria-label="Close menu"
+            aria-label={webText("Close menu")}
           >
             <X className="size-5" />
           </button>
         </div>
 
         <p className="px-5 pt-5 pb-2 font-mono text-[10px] tracking-[0.18em] text-sidebar-muted uppercase">
-          {roleLabel[role]} Portal
-        </p>
+          {webText(roleLabel[role])} <WebText text={"Portal"} /></p>
 
         {myRoles.length > 1 ? (
           <div className="mx-3 mb-2 flex gap-1 rounded-md border border-sidebar-border p-1">
@@ -88,7 +86,7 @@ export function AppShell({
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                   )}
                 >
-                  {roleLabel[r]}
+                  {webText(roleLabel[r])}
                 </Link>
               ))}
           </div>
@@ -114,7 +112,7 @@ export function AppShell({
                 )}
               >
                 <Icon className="size-4 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate">{webText(item.label)}</span>
                 {count ? (
                   <span className="ml-auto rounded-full bg-danger-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-destructive">
                     {count}
@@ -139,8 +137,7 @@ export function AppShell({
             onClick={handleSignOut}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-sidebar-border px-3 py-2 text-xs font-semibold text-sidebar-foreground/90 hover:bg-sidebar-accent"
           >
-            <LogOut className="size-3.5" /> Sign Out
-          </button>
+            <LogOut className="size-3.5" /> <WebText text={"Sign Out"} /></button>
         </div>
       </aside>
 
@@ -156,12 +153,12 @@ export function AppShell({
           <button
             className="lg:hidden"
             onClick={() => setOpen(true)}
-            aria-label="Open menu"
+            aria-label={webText("Open menu")}
           >
             <Menu className="size-5" />
           </button>
           <p className="hidden truncate font-mono text-[11px] tracking-wider text-muted-foreground uppercase sm:block">
-            {items.find((i) => i.id === activeView)?.label ?? ""}
+            {webText(items.find((i) => i.id === activeView)?.label ?? "")}
           </p>
           {search ? (
             <div className="ml-auto flex w-full max-w-sm items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5">
@@ -179,8 +176,7 @@ export function AppShell({
                 to="/login"
                 className="hidden rounded-md border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-secondary sm:block"
               >
-                Sign in
-              </Link>
+                <WebText text={"Sign in"} /></Link>
             </div>
           )}
         </header>
@@ -203,13 +199,14 @@ export function Section({
   children: ReactNode;
   className?: string;
 }) {
+  const webText = useWebText();
   return (
     <section className={cn("rounded-xl border border-border bg-card shadow-sm", className)}>
       <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4">
         <div className="min-w-0">
-          <h2 className="font-display text-base font-bold">{title}</h2>
+          <h2 className="font-display text-base font-bold">{webText(title)}</h2>
           {description ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{webText(description)}</p>
           ) : null}
         </div>
         {actions ? <div className="ml-auto flex flex-wrap gap-2">{actions}</div> : null}
@@ -232,6 +229,7 @@ export function Metric({
   tone?: "default" | "success" | "warning" | "danger";
   onClick?: () => void;
 }) {
+  const webText = useWebText();
   const tones = {
     default: "border-border",
     success: "border-success/30 bg-success-soft",
@@ -248,15 +246,16 @@ export function Metric({
       )}
     >
       <p className="font-mono text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-        {label}
+        {webText(label)}
       </p>
       <p className="mt-1 font-display text-2xl font-bold">{value}</p>
-      {note ? <p className="mt-1 text-xs text-muted-foreground">{note}</p> : null}
+      {note ? <p className="mt-1 text-xs text-muted-foreground">{webText(note)}</p> : null}
     </button>
   );
 }
 
 export function StatusBadge({ status }: { status: string }) {
+  const webText = useWebText();
   const map: Record<string, string> = {
     approved: "bg-success-soft text-success border-success/30",
     published: "bg-success-soft text-success border-success/30",
@@ -277,7 +276,7 @@ export function StatusBadge({ status }: { status: string }) {
         map[status] ?? "border-border bg-secondary text-muted-foreground",
       )}
     >
-      {status}
+      {webText(status)}
     </span>
   );
 }

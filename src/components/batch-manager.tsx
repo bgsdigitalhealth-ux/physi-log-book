@@ -1,3 +1,4 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ export function BatchManager({
   title?: string;
   description?: string;
 }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editing, setEditing] = useState<Batch | null>(null);
@@ -129,37 +131,37 @@ export function BatchManager({
   };
 
   return (
-    <Section title={title} description={description}>
+    <Section title={webText(title)} description={webText(description)}>
       <div className="mb-6 grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-2 xl:grid-cols-5">
         <Field
-          label="Batch Designation"
+          label={webText("Batch Designation")}
           value={form.name}
           onChange={(v) => setForm({ ...form, name: v })}
-          placeholder="Batch C1 (AY 2026-27)"
+          placeholder={webText("Batch C1 (AY 2026-27)")}
         />
         <Field
-          label="Roll Range"
+          label={webText("Roll Range")}
           value={form.roll_range}
           onChange={(v) => setForm({ ...form, roll_range: v })}
-          placeholder="e.g. 151-190"
+          placeholder={webText("e.g. 151-190")}
         />
         <Field
-          label="Lead Mentor"
+          label={webText("Lead Mentor")}
           value={form.mentor}
           onChange={(v) => setForm({ ...form, mentor: v })}
-          placeholder="Dr. Name"
+          placeholder={webText("Dr. Name")}
         />
         <Field
-          label="Assigned Lab"
+          label={webText("Assigned Lab")}
           value={form.venue}
           onChange={(v) => setForm({ ...form, venue: v })}
-          placeholder="Physiology Lab 1"
+          placeholder={webText("Physiology Lab 1")}
         />
         <Field
-          label="Number of Students"
+          label={webText("Number of Students")}
           value={form.student_count}
           onChange={(v) => setForm({ ...form, student_count: v })}
-          placeholder="e.g. 38"
+          placeholder={webText("e.g. 38")}
         />
         <div className="flex items-end sm:col-span-2 xl:col-span-1">
           <button
@@ -167,7 +169,7 @@ export function BatchManager({
             disabled={create.isPending}
             className="w-full rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            {create.isPending ? "Creating…" : "Create New Batch"}
+            {create.isPending ? webText("Creating…") : webText("Create New Batch")}
           </button>
         </div>
       </div>
@@ -175,8 +177,7 @@ export function BatchManager({
       <div className="grid gap-4 lg:grid-cols-2">
         {batches.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No batches yet. Create the first one above.
-          </p>
+            <WebText text={"No batches yet. Create the first one above."} /></p>
         ) : (
           batches.map((b) => (
             <div key={b.id} className="rounded-lg border border-border p-5">
@@ -189,20 +190,17 @@ export function BatchManager({
                   {b.roll_range ?? "Roll range not set"}
                 </span>
                 <span className="rounded-full bg-secondary px-2 py-0.5 font-mono text-[10px]">
-                  {b.student_count} Students
-                </span>
+                  {b.student_count} <WebText text={"Students"} /></span>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Lead Mentor
-                  </p>
+                    <WebText text={"Lead Mentor"} /></p>
                   <p className="font-medium">{b.mentor ?? "Unassigned"}</p>
                 </div>
                 <div>
                   <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Assigned Lab
-                  </p>
+                    <WebText text={"Assigned Lab"} /></p>
                   <p className="font-medium">{b.venue ?? "To be allocated"}</p>
                 </div>
               </div>
@@ -211,8 +209,7 @@ export function BatchManager({
                   onClick={() => openEdit(b)}
                   className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                 >
-                  Edit
-                </button>
+                  <WebText text={"Edit"} /></button>
                 <button
                   onClick={() => {
                     if (
@@ -225,8 +222,7 @@ export function BatchManager({
                   disabled={remove.isPending}
                   className="rounded-md border border-destructive/40 px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/5 disabled:opacity-60"
                 >
-                  Delete
-                </button>
+                  <WebText text={"Delete"} /></button>
               </div>
             </div>
           ))
@@ -240,30 +236,30 @@ export function BatchManager({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <Field
-              label="Batch Designation"
+              label={webText("Batch Designation")}
               value={editForm.name}
               onChange={(v) => setEditForm({ ...editForm, name: v })}
             />
             <Field
-              label="Roll Range"
+              label={webText("Roll Range")}
               value={editForm.roll_range}
               onChange={(v) => setEditForm({ ...editForm, roll_range: v })}
-              placeholder="e.g. 101-150"
+              placeholder={webText("e.g. 101-150")}
             />
             <Field
-              label="Lead Mentor"
+              label={webText("Lead Mentor")}
               value={editForm.mentor}
               onChange={(v) => setEditForm({ ...editForm, mentor: v })}
-              placeholder="Dr. Name"
+              placeholder={webText("Dr. Name")}
             />
             <Field
-              label="Assigned Lab"
+              label={webText("Assigned Lab")}
               value={editForm.venue}
               onChange={(v) => setEditForm({ ...editForm, venue: v })}
-              placeholder="Physiology Lab 1"
+              placeholder={webText("Physiology Lab 1")}
             />
             <Field
-              label="Number of Students"
+              label={webText("Number of Students")}
               value={editForm.student_count}
               onChange={(v) => setEditForm({ ...editForm, student_count: v })}
             />
@@ -273,15 +269,13 @@ export function BatchManager({
               onClick={() => setEditing(null)}
               className="rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
             >
-              Cancel
-            </button>
+              <WebText text={"Cancel"} /></button>
             <button
               onClick={() => update.mutate()}
               disabled={update.isPending}
               className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              Save Changes
-            </button>
+              <WebText text={"Save Changes"} /></button>
           </div>
         </OverlayModal>
       ) : null}
@@ -302,10 +296,11 @@ function Field({
   placeholder?: string;
   className?: string;
 }) {
+  const webText = useWebText();
   return (
     <label className={cn("block", className)}>
       <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        {label}
+        {webText(label)}
       </span>
       <input
         value={value}
@@ -326,17 +321,17 @@ function OverlayModal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const webText = useWebText();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg">
         <div className="mb-4 flex items-center gap-3">
-          <h2 className="font-display text-lg font-bold">{title}</h2>
+          <h2 className="font-display text-lg font-bold">{webText(title)}</h2>
           <button
             onClick={onClose}
             className="ml-auto text-sm font-semibold text-muted-foreground hover:text-foreground"
           >
-            Close
-          </button>
+            <WebText text={"Close"} /></button>
         </div>
         {children}
       </div>

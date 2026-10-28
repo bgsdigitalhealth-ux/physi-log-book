@@ -534,6 +534,27 @@ export type Database = {
         }
         Relationships: []
       }
+      website_content: {
+        Row: {
+          content: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          content: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          content?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -551,7 +572,12 @@ export type Database = {
         }
         Returns: boolean
       }
-      save_journal_template: { Args: { payload: Json }; Returns: undefined }
+      save_journal_template:
+        | { Args: { payload: Json }; Returns: undefined }
+        | {
+            Args: { payload: Json; previous_code?: string }
+            Returns: undefined
+          }
       set_student_hold: {
         Args: { _held: boolean; _reason?: string; _student_id: string }
         Returns: undefined

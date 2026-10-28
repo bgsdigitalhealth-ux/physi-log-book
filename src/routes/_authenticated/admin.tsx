@@ -1,3 +1,4 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -7,6 +8,8 @@ import {
   queryOptions,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
 import { Lock, Plus, ShieldCheck, Unlock } from "lucide-react";
 import {
   Bar,
@@ -22,12 +25,13 @@ import { AppShell, Metric, Section, StatusBadge } from "@/components/app-shell";
 import { authContextOptions, authQueryOptions, type AppRole } from "@/lib/auth";
 import { studentQueryOptions } from "./student";
 import { facultyQueryOptions } from "./faculty";
-import { createStaffAccount, deleteUserAccount } from "@/lib/admin.functions";
+import { createStaffAccount, deleteUserAccount, sendAccountPasswordLink } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { PracticalTemplateManager } from "@/components/practical-template-manager";
 import { ProfilePhoto } from "@/components/profile-photo";
 import { BatchManager } from "@/components/batch-manager";
+import { EditWeb } from "@/components/edit-web";
 
 type Staff = {
   user_id: string;
@@ -174,6 +178,7 @@ export const adminQueryOptions = {
 };
 
 function AdminPage() {
+  const webText = useWebText();
   const [view, setView] = useState("dashboard");
   const auth = useSuspenseQuery(authContextOptions);
   const batches = useSuspenseQuery(facultyQueryOptions.batches());
@@ -263,11 +268,10 @@ function AdminPage() {
             <Lock className="size-4 text-destructive" />
             <div className="min-w-0 flex-1">
               <p className="font-display text-sm font-bold text-destructive">
-                SYSTEM-WIDE ACADEMIC FREEZE ACTIVE
-              </p>
+                <WebText text={"SYSTEM-WIDE ACADEMIC FREEZE ACTIVE"} /></p>
               <p className="text-xs text-muted-foreground">
-                Locked: {freeze.reason ?? "Academic audit freeze"} (Frozen at{" "}
-                {freeze.frozen_at?.slice(0, 10) ?? "Just now"} by{" "}
+                <WebText text={"Locked:"} />{freeze.reason ?? "Academic audit freeze"} <WebText text={"(Frozen at"} />{webText(" ")}
+                {freeze.frozen_at?.slice(0, 10) ?? "Just now"} <WebText text={"by"} />{webText(" ")}
                 {freeze.frozen_by ?? "Admin"})
               </p>
             </div>
@@ -275,8 +279,7 @@ function AdminPage() {
               onClick={() => setFreezeOpen(true)}
               className="rounded-md border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10"
             >
-              Manage Freeze
-            </button>
+              <WebText text={"Manage Freeze"} /></button>
           </div>
         ) : null}
 
@@ -284,39 +287,36 @@ function AdminPage() {
           <div className="space-y-6">
             <div>
               <p className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-                Department of Physiology • MBBS Phase I
-              </p>
+                <WebText text={"Department of Physiology • MBBS Phase I"} /></p>
               <h1 className="mt-1 font-display text-3xl font-extrabold">
-                Department Administration Console
-              </h1>
+                <WebText text={"Department Administration Console"} /></h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                Central academic operations and governance.
-              </p>
+                <WebText text={"Central academic operations and governance."} /></p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <Metric
-                label="Institutional Users"
+                label={webText("Institutional Users")}
                 value={`${staff.data.length} Active`}
-                note="Faculty & Administrators"
+                note={webText("Faculty & Administrators")}
                 onClick={() => setView("manage-users")}
               />
               <Metric
-                label="Active Batches"
+                label={webText("Active Batches")}
                 value={`${batches.data.length} Batches`}
-                note="A1, A2, B1, B2 (AY 2026-27)"
+                note={webText("A1, A2, B1, B2 (AY 2026-27)")}
                 onClick={() => setView("manage-batches")}
               />
               <Metric
-                label="Approved Experiments"
+                label={webText("Approved Experiments")}
                 value={`${practicals.data.length} Modules`}
-                note="Hematology, CVS, Resp, Nerve"
+                note={webText("Hematology, CVS, Resp, Nerve")}
                 onClick={() => setView("manage-practicals")}
               />
               <Metric
-                label="Scheduled Sessions"
+                label={webText("Scheduled Sessions")}
                 value={`${sessions.data.length} Lab Postings`}
-                note="Clinical & Experimental Labs"
+                note={webText("Clinical & Experimental Labs")}
                 tone="warning"
                 onClick={() => setView("session-management")}
               />
@@ -324,25 +324,24 @@ function AdminPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
               <Section
-                title="Faculty Batch Mentorship Roster"
+                title={webText("Faculty Batch Mentorship Roster")}
                 actions={
                   <button
                     onClick={() => setView("manage-batches")}
                     className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                   >
-                    Manage
-                  </button>
+                    <WebText text={"Manage"} /></button>
                 }
               >
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                        <th className="py-2 pr-3">Batch</th>
-                        <th className="py-2 pr-3">Strength</th>
-                        <th className="py-2 pr-3">Lead Faculty Mentor</th>
-                        <th className="py-2 pr-3">Assigned Lab</th>
-                        <th className="py-2">Status</th>
+                        <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+                        <th className="py-2 pr-3"><WebText text={"Strength"} /></th>
+                        <th className="py-2 pr-3"><WebText text={"Lead Faculty Mentor"} /></th>
+                        <th className="py-2 pr-3"><WebText text={"Assigned Lab"} /></th>
+                        <th className="py-2"><WebText text={"Status"} /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -356,7 +355,7 @@ function AdminPage() {
                           </td>
                           <td className="py-2.5 pr-3 text-xs">{b.mentor ?? "Unassigned"}</td>
                           <td className="py-2.5 pr-3 text-xs">{b.venue ?? "-"}</td>
-                          <td className="py-2.5 text-xs text-success">Active</td>
+                          <td className="py-2.5 text-xs text-success"><WebText text={"Active"} /></td>
                         </tr>
                       ))}
                     </tbody>
@@ -365,25 +364,24 @@ function AdminPage() {
               </Section>
 
               <Section
-                title="Active Lab Sessions Schedule"
+                title={webText("Active Lab Sessions Schedule")}
                 actions={
                   <button
                     onClick={() => setView("session-management")}
                     className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                   >
-                    Manage All
-                  </button>
+                    <WebText text={"Manage All"} /></button>
                 }
               >
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                        <th className="py-2 pr-3">Session</th>
-                        <th className="py-2 pr-3">Batch</th>
-                        <th className="py-2 pr-3">Practical Topic</th>
-                        <th className="py-2 pr-3">Faculty Assigned</th>
-                        <th className="py-2">Status</th>
+                        <th className="py-2 pr-3"><WebText text={"Session"} /></th>
+                        <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+                        <th className="py-2 pr-3"><WebText text={"Practical Topic"} /></th>
+                        <th className="py-2 pr-3"><WebText text={"Faculty Assigned"} /></th>
+                        <th className="py-2"><WebText text={"Status"} /></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -407,6 +405,7 @@ function AdminPage() {
         ) : null}
 
         {view === "manage-users" ? <ManageUsers staff={staff.data} /> : null}
+        {view === "edit-web" ? <EditWeb onManage={setView} /> : null}
 
         {view === "manage-batches" ? <ManageBatches batches={batches.data} /> : null}
 
@@ -428,32 +427,30 @@ function AdminPage() {
 
         {view === "reviews-approvals" ? (
           <Section
-            title="Faculty Review Queue Oversight"
-            description="Administrative oversight of submitted practicals and sign-offs."
+            title={webText("Faculty Review Queue Oversight")}
+            description={webText("Administrative oversight of submitted practicals and sign-offs.")}
             actions={
               <span className="rounded-full bg-secondary px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase">
-                {reviews.data.filter((r) => r.status === "review").length} Pending Reviews
-              </span>
+                {reviews.data.filter((r) => r.status === "review").length} <WebText text={"Pending Reviews"} /></span>
             }
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                    <th className="py-2 pr-3">Student Name</th>
-                    <th className="py-2 pr-3">Roll</th>
-                    <th className="py-2 pr-3">Batch</th>
-                    <th className="py-2 pr-3">Experiment Title</th>
-                    <th className="py-2 pr-3">Submitted On</th>
-                    <th className="py-2">Status</th>
+                    <th className="py-2 pr-3"><WebText text={"Student Name"} /></th>
+                    <th className="py-2 pr-3"><WebText text={"Roll"} /></th>
+                    <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+                    <th className="py-2 pr-3"><WebText text={"Experiment Title"} /></th>
+                    <th className="py-2 pr-3"><WebText text={"Submitted On"} /></th>
+                    <th className="py-2"><WebText text={"Status"} /></th>
                   </tr>
                 </thead>
                 <tbody>
                   {reviews.data.filter((r) => r.status === "review").length === 0 ? (
                     <tr>
                       <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                        No pending submissions awaiting faculty review.
-                      </td>
+                        <WebText text={"No pending submissions awaiting faculty review."} /></td>
                     </tr>
                   ) : (
                     reviews.data
@@ -523,9 +520,12 @@ function ManageUsers({
 }: {
   staff: (Staff & { role: AppRole })[];
 }) {
+  const webText = useWebText();
   const [filter, setFilter] = useState("all");
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const createAccount = useServerFn(createStaffAccount);
+  const sendPasswordLink = useServerFn(sendAccountPasswordLink);
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -539,7 +539,7 @@ function ManageUsers({
 
   const create = useMutation({
     mutationFn: async () =>
-      createStaffAccount({
+      createAccount({
         data: {
           full_name: form.full_name,
           email: form.email,
@@ -551,8 +551,9 @@ function ManageUsers({
           password: form.password,
         },
       }),
-    onSuccess: () => {
-      toast.success("Account created and role assigned");
+    onSuccess: (result) => {
+      if (result.emailSent) toast.success("Account created. Password-setting email sent.");
+      else toast.warning(result.emailError);
       setOpen(false);
       setForm({
         ...form,
@@ -564,6 +565,12 @@ function ManageUsers({
       });
       queryClient.invalidateQueries({ queryKey: ["admin-staff"] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const resend = useMutation({
+    mutationFn: (input: { userId: string; email: string }) => sendPasswordLink({ data: { userId: input.userId } }),
+    onSuccess: (_d, v) => toast.success(`Password-setting email sent to ${v.email}.`),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -629,15 +636,14 @@ function ManageUsers({
 
   return (
     <Section
-      title="Manage Institutional Users"
-      description="Add, deactivate and assign roles to students, faculty and administrators."
+      title={webText("Manage Institutional Users")}
+      description={webText("Add, deactivate and assign roles to students, faculty and administrators.")}
       actions={
         <button
           onClick={() => setOpen(true)}
           className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          <Plus className="size-3.5" /> Add New User
-        </button>
+          <Plus className="size-3.5" /> <WebText text={"Add New User"} /></button>
       }
     >
       <select
@@ -645,23 +651,23 @@ function ManageUsers({
         onChange={(e) => setFilter(e.target.value)}
         className="mb-4 rounded-md border border-border px-3 py-1.5 text-xs"
       >
-        <option value="all">All Roles</option>
-        <option value="student">Students</option>
-        <option value="faculty">Faculty</option>
-        <option value="admin">Administrators</option>
+        <option value="all"><WebText text={"All Roles"} /></option>
+        <option value="student"><WebText text={"Students"} /></option>
+        <option value="faculty"><WebText text={"Faculty"} /></option>
+        <option value="admin"><WebText text={"Administrators"} /></option>
       </select>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Full Name</th>
-              <th className="py-2 pr-3">Email Address</th>
-              <th className="py-2 pr-3">Role</th>
-              <th className="py-2 pr-3">Roll / Desig</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2 pr-3">Created On</th>
-              <th className="py-2">Action</th>
+              <th className="py-2 pr-3"><WebText text={"Full Name"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Email Address"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Role"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Roll / Desig"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Created On"} /></th>
+              <th className="py-2"><WebText text={"Action"} /></th>
             </tr>
           </thead>
           <tbody>
@@ -682,7 +688,7 @@ function ManageUsers({
                       u.is_active ? "text-success" : "text-destructive",
                     )}
                   >
-                    {u.is_active ? "Active" : "Inactive"}
+                    {u.is_active ? webText("Active") : webText("Inactive")}
                   </span>
                 </td>
                 <td className="py-2.5 pr-3 font-mono text-xs">
@@ -690,6 +696,9 @@ function ManageUsers({
                 </td>
                 <td className="py-2.5">
                   <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" disabled={!u.email || (resend.isPending && resend.variables?.userId === u.user_id)} onClick={() => resend.mutate({ userId: u.user_id, email: u.email ?? "" })}>
+                      {resend.isPending && resend.variables?.userId === u.user_id ? "Sending…" : <WebText text="Send Password Link" />}
+                    </Button>
                     <button
                       onClick={() => {
                         setEditUser(u);
@@ -703,15 +712,14 @@ function ManageUsers({
                       }}
                       className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                     >
-                      Edit
-                    </button>
+                      <WebText text={"Edit"} /></button>
                     <button
                       onClick={() =>
                         toggle.mutate({ userId: u.user_id, active: !u.is_active })
                       }
                       className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                     >
-                      {u.is_active ? "Deactivate" : "Activate"}
+                      {u.is_active ? webText("Deactivate") : webText("Activate")}
                     </button>
                     <button
                       onClick={() => {
@@ -722,8 +730,7 @@ function ManageUsers({
                       disabled={remove.isPending}
                       className="rounded-md border border-destructive/40 px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/5 disabled:opacity-60"
                     >
-                      Delete
-                    </button>
+                      <WebText text={"Delete"} /></button>
                   </div>
                 </td>
               </tr>
@@ -733,45 +740,44 @@ function ManageUsers({
       </div>
 
       {open ? (
-        <Modal title="Add New University User" onClose={() => setOpen(false)}>
+        <Modal title={webText("Add New University User")} onClose={() => setOpen(false)}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Full Name"
+              label={webText("Full Name")}
               value={form.full_name}
               onChange={(v) => setForm({ ...form, full_name: v })}
-              placeholder={isStudent ? "Student full name" : "Dr. / Faculty Full Name"}
+              placeholder={isStudent ? webText("Student full name") : webText("Dr. / Faculty Full Name")}
             />
             <Input
-              label="Email Address"
+              label={webText("Email Address")}
               value={form.email}
               onChange={(v) => setForm({ ...form, email: v })}
-              placeholder="user@bgsmch.edu.in"
+              placeholder={webText("user@bgsmch.edu.in")}
             />
             <Input
-              label={isStudent ? "Roll Number" : "Roll / Employee Number"}
+              label={isStudent ? webText("Roll Number") : webText("Roll / Employee Number")}
               value={form.identifier}
               onChange={(v) => setForm({ ...form, identifier: v })}
-              placeholder={isStudent ? "e.g. 118" : "e.g. EMP-44"}
+              placeholder={isStudent ? webText("e.g. 118") : webText("e.g. EMP-44")}
             />
             {isStudent ? (
               <Input
-                label="Register Number"
+                label={webText("Register Number")}
                 value={form.register_number}
                 onChange={(v) => setForm({ ...form, register_number: v })}
-                placeholder="e.g. BGSMCH-2026-MED-118"
+                placeholder={webText("e.g. BGSMCH-2026-MED-118")}
               />
             ) : (
               <Input
-                label="Designation"
+                label={webText("Designation")}
                 value={form.designation}
                 onChange={(v) => setForm({ ...form, designation: v })}
-                placeholder="Assoc Prof"
+                placeholder={webText("Assoc Prof")}
               />
             )}
             <label className="block">
               <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                Role Type
-              </span>
+                <WebText text={"Role Type"} /></span>
               <select
                 value={form.role}
                 onChange={(e) =>
@@ -782,15 +788,14 @@ function ManageUsers({
                 }
                 className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="student">Student (enrol with temporary password)</option>
-                <option value="faculty">Faculty Member / Reviewer</option>
-                <option value="admin">Department Administrator</option>
+                <option value="student"><WebText text={"Student (enrol with temporary password)"} /></option>
+                <option value="faculty"><WebText text={"Faculty Member / Reviewer"} /></option>
+                <option value="admin"><WebText text={"Department Administrator"} /></option>
               </select>
             </label>
             <label className="block">
               <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                Assigned Batch
-              </span>
+                <WebText text={"Assigned Batch"} /></span>
               <select
                 value={form.batch_id}
                 onChange={(e) => setForm({ ...form, batch_id: e.target.value })}
@@ -804,10 +809,10 @@ function ManageUsers({
               </select>
             </label>
             <Input
-              label="Temporary Password"
+              label={webText("Temporary Password")}
               value={form.password}
               onChange={(v) => setForm({ ...form, password: v })}
-              placeholder="Minimum 8 characters"
+              placeholder={webText("Leave blank for automatic temporary password")}
             />
           </div>
           <div className="mt-5 flex justify-end gap-2">
@@ -815,15 +820,12 @@ function ManageUsers({
               onClick={() => setOpen(false)}
               className="rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
             >
-              Cancel
-            </button>
-            <button
+              <WebText text={"Cancel"} /></button>
+            <Button
               onClick={() => create.mutate()}
               disabled={create.isPending}
-              className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              Create Account
-            </button>
+              <WebText text={create.isPending ? "Creating…" : "Create Account & Send Email"} /></Button>
           </div>
         </Modal>
       ) : null}
@@ -832,37 +834,36 @@ function ManageUsers({
         <Modal title={`Edit User — ${editUser.full_name}`} onClose={() => setEditUser(null)}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Full Name"
+              label={webText("Full Name")}
               value={editForm.full_name}
               onChange={(v) => setEditForm({ ...editForm, full_name: v })}
             />
             <Input
-              label="Roll / Employee Number"
+              label={webText("Roll / Employee Number")}
               value={editForm.roll_number}
               onChange={(v) => setEditForm({ ...editForm, roll_number: v })}
             />
             <Input
-              label="Register Number"
+              label={webText("Register Number")}
               value={editForm.register_number}
               onChange={(v) => setEditForm({ ...editForm, register_number: v })}
-              placeholder="Students only"
+              placeholder={webText("Students only")}
             />
             <Input
-              label="Designation"
+              label={webText("Designation")}
               value={editForm.designation}
               onChange={(v) => setEditForm({ ...editForm, designation: v })}
-              placeholder="Faculty only"
+              placeholder={webText("Faculty only")}
             />
             <label className="block sm:col-span-2">
               <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                Assigned Batch
-              </span>
+                <WebText text={"Assigned Batch"} /></span>
               <select
                 value={editForm.batch_id}
                 onChange={(e) => setEditForm({ ...editForm, batch_id: e.target.value })}
                 className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               >
-                <option value="">No batch</option>
+                <option value=""><WebText text={"No batch"} /></option>
                 {["BATCH-B2", "BATCH-B1", "BATCH-A2", "BATCH-A1"].map((b) => (
                   <option key={b} value={b}>
                     {b}
@@ -872,23 +873,19 @@ function ManageUsers({
             </label>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            Email address and password cannot be changed here. Role changes are made
-            from the user's account record.
-          </p>
+            <WebText text={"Email address and password cannot be changed here. Role changes are made from the user's account record."} /></p>
           <div className="mt-5 flex justify-end gap-2">
             <button
               onClick={() => setEditUser(null)}
               className="rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
             >
-              Cancel
-            </button>
+              <WebText text={"Cancel"} /></button>
             <button
               onClick={() => update.mutate()}
               disabled={update.isPending}
               className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              Save Changes
-            </button>
+              <WebText text={"Save Changes"} /></button>
           </div>
         </Modal>
       ) : null}
@@ -897,10 +894,12 @@ function ManageUsers({
 }
 
 function ManageBatches({ batches }: { batches: Batch[] }) {
+  const webText = useWebText();
   return <BatchManager batches={batches} />;
 }
 
 function ManagePracticals({ practicals }: { practicals: Practical[] }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editCode, setEditCode] = useState<string | null>(null);
@@ -975,8 +974,8 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
 
   return (
     <Section
-      title="Manage Practicals & Curricula"
-      description="Create, activate and sequence experiment content aligned with NMC requirements."
+      title={webText("Manage Practicals & Curricula")}
+      description={webText("Create, activate and sequence experiment content aligned with NMC requirements.")}
       actions={
         <button
           onClick={() => {
@@ -985,8 +984,7 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
           }}
           className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          <Plus className="size-3.5" /> Add New Practical
-        </button>
+          <Plus className="size-3.5" /> <WebText text={"Add New Practical"} /></button>
       }
     >
       <div className="mb-4 space-y-3">
@@ -1003,24 +1001,24 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
                     : "border-border hover:bg-secondary"
                 }`}
               >
-                {c} <span className="opacity-70">({count})</span>
+                {webText(c)} <span className="opacity-70">({count})</span>
               </button>
             );
           })}
         </div>
-        <Input label="Search" value={search} onChange={setSearch} placeholder="Search by code, title or type…" className="max-w-sm" />
+        <Input label={webText("Search")} value={search} onChange={setSearch} placeholder={webText("Search by code, title or type…")} className="max-w-sm" />
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Code</th>
-              <th className="py-2 pr-3">Sequence</th>
-              <th className="py-2 pr-3">Practical Experiment Title</th>
-              <th className="py-2 pr-3">Category</th>
-              <th className="py-2 pr-3">Type</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2">Actions</th>
+              <th className="py-2 pr-3"><WebText text={"Code"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Sequence"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Practical Experiment Title"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Category"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Type"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2"><WebText text={"Actions"} /></th>
             </tr>
           </thead>
           <tbody>
@@ -1034,7 +1032,7 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
                 <td className="py-2.5 pr-3 text-xs">{p.category}</td>
                 <td className="py-2.5 pr-3 text-xs">{p.type}</td>
                 <td className="py-2.5 pr-3 text-xs text-success">
-                  {p.active ? "Active" : "Inactive"}
+                  {p.active ? webText("Active") : webText("Inactive")}
                 </td>
                 <td className="py-2.5">
                   <div className="flex gap-2">
@@ -1052,14 +1050,12 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
                       }}
                       className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                     >
-                      Edit
-                    </button>
+                      <WebText text={"Edit"} /></button>
                     <button
                       onClick={() => remove.mutate(p.code)}
                       className="rounded-md border border-destructive/40 px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/5"
                     >
-                      Delete
-                    </button>
+                      <WebText text={"Delete"} /></button>
                   </div>
                 </td>
               </tr>
@@ -1067,8 +1063,7 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
             {visible.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-sm text-muted-foreground">
-                  No practicals match this category or search.
-                </td>
+                  <WebText text={"No practicals match this category or search."} /></td>
               </tr>
             ) : null}
           </tbody>
@@ -1077,34 +1072,30 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
 
       {open ? (
         <Modal
-          title={editCode ? `Edit Practical (${editCode})` : "Add New Practical"}
+          title={editCode ? `Edit Practical (${editCode})` : webText("Add New Practical")}
           onClose={() => setOpen(false)}
         >
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Practical Code" value={form.code} onChange={(v) => setForm({ ...form, code: v })} placeholder="e.g. PH-EX-009" />
-            <Input label="Sequence Number" value={form.seq} onChange={(v) => setForm({ ...form, seq: v })} placeholder="e.g. 9" />
-            <Input label="Practical Experiment Title" className="sm:col-span-2" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="e.g. Determination of ESR" />
-            <Select label="Category" value={form.category} options={CATEGORIES} onChange={(v) => setForm({ ...form, category: v })} />
-            <Select label="Type" value={form.type} options={TYPES} onChange={(v) => setForm({ ...form, type: v })} />
+            <Input label={webText("Practical Code")} value={form.code} onChange={(v) => setForm({ ...form, code: v })} placeholder={webText("e.g. PH-EX-009")} />
+            <Input label={webText("Sequence Number")} value={form.seq} onChange={(v) => setForm({ ...form, seq: v })} placeholder={webText("e.g. 9")} />
+            <Input label={webText("Practical Experiment Title")} className="sm:col-span-2" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder={webText("e.g. Determination of ESR")} />
+            <Select label={webText("Category")} value={form.category} options={CATEGORIES} onChange={(v) => setForm({ ...form, category: v })} />
+            <Select label={webText("Type")} value={form.type} options={TYPES} onChange={(v) => setForm({ ...form, type: v })} />
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            Active — Published and instantly synchronized across faculty and student
-            dashboards.
-          </p>
+            <WebText text={"Active — Published and instantly synchronized across faculty and student dashboards."} /></p>
           <div className="mt-5 flex justify-end gap-2">
             <button
               onClick={() => setOpen(false)}
               className="rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
             >
-              Cancel
-            </button>
+              <WebText text={"Cancel"} /></button>
             <button
               onClick={() => save.mutate()}
               disabled={save.isPending}
               className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              Save Practical
-            </button>
+              <WebText text={"Save Practical"} /></button>
           </div>
         </Modal>
       ) : null}
@@ -1113,6 +1104,7 @@ function ManagePracticals({ practicals }: { practicals: Practical[] }) {
 }
 
 function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: Batch[] }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -1202,8 +1194,8 @@ function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: B
 
   return (
     <Section
-      title="Practical Lab Session Management"
-      description="Schedule practical lab sessions, assign faculty, rooms and dates."
+      title={webText("Practical Lab Session Management")}
+      description={webText("Schedule practical lab sessions, assign faculty, rooms and dates.")}
       actions={
         <button
           onClick={() => {
@@ -1213,31 +1205,28 @@ function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: B
           }}
           className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          <Plus className="size-3.5" /> Schedule Lab Session
-        </button>
+          <Plus className="size-3.5" /> <WebText text={"Schedule Lab Session"} /></button>
       }
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Session ID</th>
-              <th className="py-2 pr-3">Date</th>
-              <th className="py-2 pr-3">Batch</th>
-              <th className="py-2 pr-3">Experiment Title</th>
-              <th className="py-2 pr-3">Faculty Assigned</th>
-              <th className="py-2 pr-3">Venue</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2">Actions</th>
+              <th className="py-2 pr-3"><WebText text={"Session ID"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Date"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Experiment Title"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Faculty Assigned"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Venue"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2"><WebText text={"Actions"} /></th>
             </tr>
           </thead>
           <tbody>
             {sessions.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-6 text-center text-muted-foreground">
-                  No practical lab sessions scheduled yet. Click "+ Schedule Lab Session"
-                  to create one.
-                </td>
+                  <WebText text={"No practical lab sessions scheduled yet. Click \"+ Schedule Lab Session\" to create one."} /></td>
               </tr>
             ) : (
               sessions.map((s) => (
@@ -1287,8 +1276,7 @@ function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: B
                         }}
                         className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                       >
-                        Edit
-                      </button>
+                        <WebText text={"Edit"} /></button>
                       <button
                         onClick={() => {
                           if (window.confirm(`Delete session ${s.id} (${s.topic})?`)) {
@@ -1298,8 +1286,7 @@ function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: B
                         disabled={remove.isPending}
                         className="rounded-md border border-destructive/40 px-2.5 py-1 text-xs font-semibold text-destructive hover:bg-destructive/5 disabled:opacity-60"
                       >
-                        Delete
-                      </button>
+                        <WebText text={"Delete"} /></button>
                     </div>
                   </td>
                 </tr>
@@ -1310,32 +1297,31 @@ function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: B
       </div>
 
       {open ? (
-        <Modal title={editId ? `Edit Session (${editId})` : "Schedule Lab Session"} onClose={() => { setOpen(false); setEditId(null); }}>
+        <Modal title={editId ? `Edit Session (${editId})` : webText("Schedule Lab Session")} onClose={() => { setOpen(false); setEditId(null); }}>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Input label="Session Topic / Practical Title" className="sm:col-span-2" value={form.topic} onChange={(v) => setForm({ ...form, topic: v })} placeholder="e.g. Effect of Exercise on Blood Pressure" />
-            <Input label="Date" value={form.session_date} onChange={(v) => setForm({ ...form, session_date: v })} placeholder="2026-11-02" />
+            <Input label={webText("Session Topic / Practical Title")} className="sm:col-span-2" value={form.topic} onChange={(v) => setForm({ ...form, topic: v })} placeholder={webText("e.g. Effect of Exercise on Blood Pressure")} />
+            <Input label={webText("Date")} value={form.session_date} onChange={(v) => setForm({ ...form, session_date: v })} placeholder={webText("2026-11-02")} />
             {editId ? (
-              <Select label="Status" value={form.status} options={["Scheduled", "Completed", "Cancelled"]} onChange={(v) => setForm({ ...form, status: v })} />
+              <Select label={webText("Status")} value={form.status} options={["Scheduled", "Completed", "Cancelled"]} onChange={(v) => setForm({ ...form, status: v })} />
             ) : (
-              <Input label="Session ID (optional)" value={form.id} onChange={(v) => setForm({ ...form, id: v })} placeholder="SES-16" />
+              <Input label={webText("Session ID (optional)")} value={form.id} onChange={(v) => setForm({ ...form, id: v })} placeholder={webText("SES-16")} />
             )}
-            <Select label="Batch" value={form.batch_id} options={batches.map((b) => b.id)} onChange={(v) => setForm({ ...form, batch_id: v })} />
-            <Input label="Venue" value={form.venue} onChange={(v) => setForm({ ...form, venue: v })} placeholder="Physiology Lab 1" />
-            <Input label="Faculty Assigned" className="sm:col-span-2" value={form.faculty_name} onChange={(v) => setForm({ ...form, faculty_name: v })} placeholder="Dr. Name" />
+            <Select label={webText("Batch")} value={form.batch_id} options={batches.map((b) => b.id)} onChange={(v) => setForm({ ...form, batch_id: v })} />
+            <Input label={webText("Venue")} value={form.venue} onChange={(v) => setForm({ ...form, venue: v })} placeholder={webText("Physiology Lab 1")} />
+            <Input label={webText("Faculty Assigned")} className="sm:col-span-2" value={form.faculty_name} onChange={(v) => setForm({ ...form, faculty_name: v })} placeholder={webText("Dr. Name")} />
           </div>
           <div className="mt-5 flex justify-end gap-2">
             <button
               onClick={() => { setOpen(false); setEditId(null); }}
               className="rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
             >
-              Cancel
-            </button>
+              <WebText text={"Cancel"} /></button>
             <button
               onClick={() => schedule.mutate()}
               disabled={schedule.isPending}
               className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
-              {editId ? "Save Changes" : "Schedule Session"}
+              {editId ? webText("Save Changes") : webText("Schedule Session")}
             </button>
           </div>
         </Modal>
@@ -1345,6 +1331,7 @@ function ManageSessions({ sessions, batches }: { sessions: Session[]; batches: B
 }
 
 function AdminRecords({ reviews, practicals }: { reviews: Review[]; practicals: Practical[] }) {
+  const webText = useWebText();
   const exportCsv = () => {
     const header = "Record ID,Roll,Student,Batch,Experiment,Status,Marks";
     const lines = reviews.map((r, i) =>
@@ -1370,40 +1357,36 @@ function AdminRecords({ reviews, practicals }: { reviews: Review[]; practicals: 
 
   return (
     <Section
-      title="Institutional Student Records Master Log"
-      description="Central oversight of student entries, evaluation scores and digital certification."
+      title={webText("Institutional Student Records Master Log")}
+      description={webText("Central oversight of student entries, evaluation scores and digital certification.")}
       actions={
         <button
           onClick={exportCsv}
           className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
         >
-          Export Records (CSV)
-        </button>
+          <WebText text={"Export Records (CSV)"} /></button>
       }
     >
       <p className="mb-4 rounded-md bg-secondary px-3 py-2 text-xs text-muted-foreground">
-        Digital verification and grading are managed exclusively by Faculty.
-      </p>
+        <WebText text={"Digital verification and grading are managed exclusively by Faculty."} /></p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Roll No</th>
-              <th className="py-2 pr-3">Student Name</th>
-              <th className="py-2 pr-3">Batch</th>
-              <th className="py-2 pr-3">Experiment</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2 pr-3">Marks</th>
-              <th className="py-2">Governance</th>
+              <th className="py-2 pr-3"><WebText text={"Roll No"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Student Name"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Experiment"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Marks"} /></th>
+              <th className="py-2"><WebText text={"Governance"} /></th>
             </tr>
           </thead>
           <tbody>
             {reviews.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                  No student records submitted yet. Records certified by Faculty mentors
-                  will appear here.
-                </td>
+                  <WebText text={"No student records submitted yet. Records certified by Faculty mentors will appear here."} /></td>
               </tr>
             ) : (
               reviews.map((r) => (
@@ -1432,11 +1415,10 @@ function AdminRecords({ reviews, practicals }: { reviews: Review[]; practicals: 
                     <StatusBadge status={r.status} />
                   </td>
                   <td className="py-2.5 pr-3 font-mono text-xs">
-                    {r.marks != null ? `${r.marks}/${r.max_marks ?? 20}` : "-"}
+                    {r.marks != null ? `${r.marks}/${r.max_marks ?? 20}` : webText("-")}
                   </td>
                   <td className="py-2.5 font-mono text-[10px] uppercase text-muted-foreground">
-                    View-Only
-                  </td>
+                    <WebText text={"View-Only"} /></td>
                 </tr>
               ))
             )}
@@ -1448,6 +1430,7 @@ function AdminRecords({ reviews, practicals }: { reviews: Review[]; practicals: 
 }
 
 function AttendanceOversight({ reviews }: { reviews: Review[] }) {
+  const webText = useWebText();
   const data = [
     { name: "Certified", value: reviews.filter((r) => r.status === "approved").length },
     { name: "In Review", value: reviews.filter((r) => r.status === "review").length },
@@ -1456,11 +1439,11 @@ function AttendanceOversight({ reviews }: { reviews: Review[] }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label="Records Tracked" value={`${reviews.length}`} />
-        <Metric label="Exam Threshold" value="80%" note="Mandatory eligibility" tone="warning" />
-        <Metric label="Certified" value={`${reviews.filter((r) => r.status === "approved").length}`} tone="success" />
+        <Metric label={webText("Records Tracked")} value={`${reviews.length}`} />
+        <Metric label={webText("Exam Threshold")} value="80%" note={webText("Mandatory eligibility")} tone="warning" />
+        <Metric label={webText("Certified")} value={`${reviews.filter((r) => r.status === "approved").length}`} tone="success" />
       </div>
-      <Section title="MBBS Phase I Record Distribution">
+      <Section title={webText("MBBS Phase I Record Distribution")}>
         <div className="h-64">
           <ResponsiveContainer>
             <BarChart data={data}>
@@ -1484,6 +1467,7 @@ function ReportsAnalytics({
   practicals: Practical[];
   reviews: Review[];
 }) {
+  const webText = useWebText();
   const data = practicals.map((p) => ({
     code: p.code,
     approved: reviews.filter((r) => r.practical_code === p.code && r.status === "approved")
@@ -1491,8 +1475,8 @@ function ReportsAnalytics({
   }));
   return (
     <Section
-      title="Department Reports & Academic Analytics"
-      description="Completion rate by experiment and batch comparison metrics."
+      title={webText("Department Reports & Academic Analytics")}
+      description={webText("Completion rate by experiment and batch comparison metrics.")}
     >
       <div className="h-80">
         <ResponsiveContainer>
@@ -1514,6 +1498,7 @@ function Broadcast({
 }: {
   notifications: { id: string; title: string; message: string; type: string; created_at: string }[];
 }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
@@ -1541,23 +1526,21 @@ function Broadcast({
 
   return (
     <Section
-      title="Institutional Notifications & Broadcasts"
-      description="Broadcast circulars to students and faculty."
+      title={webText("Institutional Notifications & Broadcasts")}
+      description={webText("Broadcast circulars to students and faculty.")}
       actions={
         <button
           onClick={() => send.mutate()}
           className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          Broadcast Circular
-        </button>
+          <WebText text={"Broadcast Circular"} /></button>
       }
     >
       <div className="mb-6 grid gap-3 rounded-lg border border-border p-4">
-        <Input label="Circular Subject" value={subject} onChange={setSubject} placeholder="e.g. Internal Assessment Dates" />
+        <Input label={webText("Circular Subject")} value={subject} onChange={setSubject} placeholder={webText("e.g. Internal Assessment Dates")} />
         <label className="block">
           <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Message
-          </span>
+            <WebText text={"Message"} /></span>
           <textarea
             rows={3}
             value={message}
@@ -1566,7 +1549,7 @@ function Broadcast({
           />
         </label>
         <Select
-          label="Audience"
+          label={webText("Audience")}
           value={audience}
           options={["student", "faculty", "admin"]}
           onChange={(v) => setAudience(v as AppRole)}
@@ -1600,6 +1583,7 @@ function SystemSettings({
   };
   onOpenFreeze: () => void;
 }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const [form, setForm] = useState({
     academic_year: settings.academic_year,
@@ -1633,30 +1617,28 @@ function SystemSettings({
   return (
     <div className="space-y-6">
       <Section
-        title="System Settings & Governance"
-        description="Configure academic year, attendance thresholds and mark limits."
+        title={webText("System Settings & Governance")}
+        description={webText("Configure academic year, attendance thresholds and mark limits.")}
         actions={
           <button
             onClick={() => save.mutate()}
             className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
           >
-            Save Configuration
-          </button>
+            <WebText text={"Save Configuration"} /></button>
         }
       >
         <div className="grid gap-4 sm:grid-cols-3">
-          <Input label="Active Academic Year" value={form.academic_year} onChange={(v) => setForm({ ...form, academic_year: v })} />
-          <Input label="Minimum Attendance Threshold (%)" value={form.attendance_min} onChange={(v) => setForm({ ...form, attendance_min: v })} />
-          <Input label="Default Practical Max Marks" value={form.default_max_marks} onChange={(v) => setForm({ ...form, default_max_marks: v })} />
+          <Input label={webText("Active Academic Year")} value={form.academic_year} onChange={(v) => setForm({ ...form, academic_year: v })} />
+          <Input label={webText("Minimum Attendance Threshold (%)")} value={form.attendance_min} onChange={(v) => setForm({ ...form, attendance_min: v })} />
+          <Input label={webText("Default Practical Max Marks")} value={form.default_max_marks} onChange={(v) => setForm({ ...form, default_max_marks: v })} />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
-          University Curricula Standard: NMC Competency-Based Medical Education (CBME)
-        </p>
+          <WebText text={"University Curricula Standard: NMC Competency-Based Medical Education (CBME)"} /></p>
       </Section>
 
       <Section
-        title="Master Academic Freeze Governance"
-        description="When frozen by Central Administration, all student submissions, entries and faculty grading are locked immediately across all portals."
+        title={webText("Master Academic Freeze Governance")}
+        description={webText("When frozen by Central Administration, all student submissions, entries and faculty grading are locked immediately across all portals.")}
         actions={
           <span
             className={cn(
@@ -1672,19 +1654,19 @@ function SystemSettings({
           <div className="mb-4 grid gap-2 text-sm sm:grid-cols-3">
             <p>
               <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                Frozen By:{" "}
+                <WebText text={"Frozen By:"} />{webText(" ")}
               </span>
               {freeze.frozen_by ?? "Admin"}
             </p>
             <p>
               <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                Timestamp:{" "}
+                <WebText text={"Timestamp:"} />{webText(" ")}
               </span>
               {freeze.frozen_at?.slice(0, 16).replace("T", " ") ?? "Recently"}
             </p>
             <p>
               <span className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                Official Reason:{" "}
+                <WebText text={"Official Reason:"} />{webText(" ")}
               </span>
               {freeze.reason ?? "Administrative Review"}
             </p>
@@ -1705,8 +1687,8 @@ function SystemSettings({
             <Lock className="size-3.5" />
           )}
           {freeze.is_frozen
-            ? "Release Academic Freeze (Unlock)"
-            : "Engage Academic Freeze"}
+            ? webText("Release Academic Freeze (Unlock)")
+            : webText("Engage Academic Freeze")}
         </button>
       </Section>
     </div>
@@ -1724,43 +1706,36 @@ function FreezeModal({
   onConfirm: (frozen: boolean, reason: string, scope: string) => void;
   busy: boolean;
 }) {
+  const webText = useWebText();
   const [reason, setReason] = useState("End of Term Academic Assessment & Registry Lock");
   const [scope, setScope] = useState("all");
   return (
     <Modal
       title={
         freeze.is_frozen
-          ? "Release Academic Operations Freeze"
-          : "Engage Academic Operations Freeze"
+          ? webText("Release Academic Operations Freeze")
+          : webText("Engage Academic Operations Freeze")
       }
       onClose={onClose}
     >
       {freeze.is_frozen ? (
         <p className="text-sm text-muted-foreground">
-          System is currently frozen. Active since {freeze.frozen_at ?? "Recently"} by{" "}
-          {freeze.frozen_by ?? "Admin"}. Reason: {freeze.reason ?? "Administrative Review"}.
-          Releasing the freeze will restore standard submission and grading rights for all
-          students and faculty.
-        </p>
+          <WebText text={"System is currently frozen. Active since"} />{freeze.frozen_at ?? "Recently"} <WebText text={"by"} />{webText(" ")}
+          {freeze.frozen_by ?? "Admin"}<WebText text={". Reason:"} />{freeze.reason ?? "Administrative Review"}<WebText text={". Releasing the freeze will restore standard submission and grading rights for all students and faculty."} /></p>
       ) : (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            This will immediately halt all student practical observation entries, new
-            submissions, profile modifications, and faculty review mark assignments across
-            the college portal.
-          </p>
-          <Input label="Official Reason for Freeze" value={reason} onChange={setReason} />
+            <WebText text={"This will immediately halt all student practical observation entries, new submissions, profile modifications, and faculty review mark assignments across the college portal."} /></p>
+          <Input label={webText("Official Reason for Freeze")} value={reason} onChange={setReason} />
           <Select
-            label="Scope of Freeze"
+            label={webText("Scope of Freeze")}
             value={scope}
             options={["all", "student_only", "faculty_only"]}
             onChange={setScope}
           />
           <p className="flex items-start gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-            Security Protocol: This operation engages central institutional governance.
-            Neither students nor faculty members have permissions to override this lock.
-          </p>
+            <WebText text={"Security Protocol: This operation engages central institutional governance. Neither students nor faculty members have permissions to override this lock."} /></p>
         </div>
       )}
       <div className="mt-5 flex justify-end gap-2">
@@ -1768,14 +1743,13 @@ function FreezeModal({
           onClick={onClose}
           className="rounded-md border border-border px-3 py-2 text-xs font-semibold hover:bg-secondary"
         >
-          Cancel
-        </button>
+          <WebText text={"Cancel"} /></button>
         <button
           onClick={() => onConfirm(!freeze.is_frozen, reason, scope)}
           disabled={busy}
           className="rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
         >
-          {freeze.is_frozen ? "Confirm & Unlock System" : "Confirm & Freeze All Operations"}
+          {freeze.is_frozen ? webText("Confirm & Unlock System") : webText("Confirm & Freeze All Operations")}
         </button>
       </div>
     </Modal>
@@ -1791,17 +1765,17 @@ function Modal({
   children: React.ReactNode;
   onClose: () => void;
 }) {
+  const webText = useWebText();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-border bg-card p-6 shadow-lg">
         <div className="mb-4 flex items-center gap-3">
-          <h2 className="font-display text-lg font-bold">{title}</h2>
+          <h2 className="font-display text-lg font-bold">{webText(title)}</h2>
           <button
             onClick={onClose}
             className="ml-auto text-sm font-semibold text-muted-foreground hover:text-foreground"
           >
-            Close
-          </button>
+            <WebText text={"Close"} /></button>
         </div>
         {children}
       </div>
@@ -1822,10 +1796,11 @@ function Input({
   placeholder?: string;
   className?: string;
 }) {
+  const webText = useWebText();
   return (
     <label className={cn("block", className)}>
       <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        {label}
+        {webText(label)}
       </span>
       <input
         value={value}
@@ -1848,10 +1823,11 @@ function Select({
   options: string[];
   onChange: (v: string) => void;
 }) {
+  const webText = useWebText();
   return (
     <label className="block">
       <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        {label}
+        {webText(label)}
       </span>
       <select
         value={value}
@@ -1860,7 +1836,7 @@ function Select({
       >
         {options.map((o) => (
           <option key={o} value={o}>
-            {o}
+            {webText(o)}
           </option>
         ))}
       </select>

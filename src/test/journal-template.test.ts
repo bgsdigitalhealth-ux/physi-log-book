@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { canEditJournal, emptyTemplate, validateTemplate } from '@/lib/journal-template';
 
 describe('Shared journal editing', () => {
+  it('starts a new practical with the PDF maximum of 5', () => expect(emptyTemplate().max_marks).toBe(5));
   it('allows faculty', () => expect(canEditJournal(['faculty'])).toBe(true));
   it('allows administrators', () => expect(canEditJournal(['admin'])).toBe(true));
   it('denies students', () => expect(canEditJournal(['student'])).toBe(false));

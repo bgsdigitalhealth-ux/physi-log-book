@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { passwordResetRedirect, temporaryAccountPassword } from "@/lib/account-onboarding";
 
 export type StaffInput = {
   email: string;
@@ -39,7 +40,7 @@ export const createStaffAccount = createServerFn({ method: "POST" })
     if (!d.full_name || d.full_name.trim().length < 2) {
       throw new Error("Enter the full name.");
     }
-    if (!d.password || d.password.length < 8) {
+    if (typeof d.password !== "string" || (d.password && d.password.length < 8)) {
       throw new Error("Password must be at least 8 characters.");
     }
     if (d.role !== "faculty" && d.role !== "admin" && d.role !== "student") {
@@ -58,7 +59,7 @@ export const createStaffAccount = createServerFn({ method: "POST" })
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email.trim().toLowerCase(),
-      password: data.password,
+      password: data.password || temporaryAccountPassword(),
       email_confirm: true,
       user_metadata: {
         full_name: data.full_name.trim(),
@@ -76,9 +77,12 @@ export const createStaffAccount = createServerFn({ method: "POST" })
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({ user_id: newUserId, role: data.role });
-    if (roleError) throw new Error(roleError.message);
+    if (roleError) {
+      await supabaseAdmin.auth.admin.deleteUser(newUserId);
+      throw new Error(roleError.message);
+    }
 
-    await supabaseAdmin
+    const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .update({
         full_name: data.full_name.trim(),
@@ -91,7 +95,34 @@ export const createStaffAccount = createServerFn({ method: "POST" })
       })
       .eq("user_id", newUserId);
 
-    return { userId: newUserId, email: data.email.trim().toLowerCase() };
+    if (profileError) {
+      await supabaseAdmin.auth.admin.deleteUser(newUserId);
+      throw new Error(profileError.message);
+    }
+    const { error: emailError } = await supabaseAdmin.auth.resetPasswordForEmail(
+      data.email.trim().toLowerCase(),
+      { redirectTo: passwordResetRedirect("https://physiologypracticalrecord.lovable.app") },
+    );
+    return { userId: newUserId, email: data.email.trim().toLowerCase(), emailSent: !emailError,
+      emailError: emailError ? "The account was created, but the password email could not be sent. Try Send Password Link again shortly." : null };
+  });
+
+export const sendAccountPasswordLink = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { userId: string }) => {
+    if (!d || typeof d.userId !== "string" || !d.userId) throw new Error("Select a user.");
+    return d;
+  })
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: account, error } = await supabaseAdmin.auth.admin.getUserById(data.userId);
+    if (error || !account.user?.email) throw new Error("This account has no available email address.");
+    const { error: sendError } = await supabaseAdmin.auth.resetPasswordForEmail(account.user.email, {
+      redirectTo: passwordResetRedirect("https://physiologypracticalrecord.lovable.app"),
+    });
+    if (sendError) throw new Error("The password email could not be sent. Wait a little and try again.");
+    return { sent: true };
   });
 
 export const deleteUserAccount = createServerFn({ method: "POST" })

@@ -166,7 +166,32 @@
   }
 }
 
+/* Keep the public sign-in palette local to avoid changing portal themes. */
+.signin-page {
+  --primary: oklch(0.46 0.095 180);
+  --primary-foreground: oklch(1 0 0);
+  --ring: oklch(0.46 0.095 180);
+  --background: oklch(0.985 0.003 180);
+  --foreground: oklch(0.25 0.018 180);
+  --muted-foreground: oklch(0.5 0.02 180);
+}
+
 /* Mobile & tablet media queries */
+.home-page {
+  --primary: oklch(0.55 0.2 25);
+  --primary-foreground: oklch(1 0 0);
+  --ring: oklch(0.55 0.2 25);
+  --background: oklch(0.99 0.002 240);
+  --foreground: oklch(0.23 0.025 240);
+  --muted-foreground: oklch(0.43 0.025 240);
+}
+.home-banner { min-height: 540px; }
+.home-banner-copy { background: linear-gradient(90deg, color-mix(in oklch, var(--background) 90%, transparent), color-mix(in oklch, var(--background) 50%, transparent) 42%, transparent 65%); }
+@media (max-width: 640px) {
+  .home-banner { min-height: 510px; }
+  .home-banner-copy { background: color-mix(in oklch, var(--background) 80%, transparent); }
+  .home-page .home-title { font-size: 2.75rem; line-height: 1.15; }
+}
 @media (max-width: 1023px) {
   main { overflow-x: hidden; }
   .fixed.inset-0 > div { max-height: calc(100dvh - 2rem); overflow-y: auto; }

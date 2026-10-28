@@ -26,7 +26,7 @@ export function useRealtimeSync() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const channel = supabase.channel("portal-sync");
+    const channel = supabase.channel(`portal-sync-${crypto.randomUUID()}`);
     for (const table of SYNCED_TABLES) {
       channel.on(
         "postgres_changes",

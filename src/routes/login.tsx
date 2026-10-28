@@ -1,8 +1,12 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ArrowRight,
+  Microscope,
+  LockKeyhole,
   Check,
   Eye,
   EyeOff,
@@ -17,6 +21,8 @@ import { authQueryOptions, claimRole, useAuth, type AppRole } from "@/lib/auth";
 import { homeFor } from "@/lib/nav";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import laboratoryImage from "@/assets/signin-laboratory.jpg";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -54,6 +60,7 @@ const RULES = [
 ] as const;
 
 function LoginPage() {
+  const webText = useWebText();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const auth = useAuth();
@@ -194,196 +201,182 @@ function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-screen bg-background lg:grid-cols-[1.05fr_1fr]">
-      <div className="relative hidden flex-col justify-between bg-sidebar p-10 text-sidebar-foreground lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-lg bg-sidebar-primary font-display text-base font-bold">
-            BG
+    <div className="signin-page min-h-screen bg-background text-foreground">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-5 py-5 sm:px-10">
+          <Link to="/" className="flex min-w-0 items-center gap-3">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary font-display text-base font-bold text-primary-foreground"><WebText text={"BG"} /></span>
+            <span className="min-w-0">
+              <span className="block font-display text-sm font-semibold sm:text-base"><WebText text={"BGS Medical College Hospital"} /></span>
+              <span className="block text-xs text-muted-foreground"><WebText text={"Department of Physiology"} /></span>
+            </span>
+          </Link>
+          <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
+            <Link to="/"><ArrowLeft /> <span className="hidden sm:inline"><WebText text={"Back to home"} /></span></Link>
+          </Button>
+        </div>
+      </header>
+      <main className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-10 sm:px-10 sm:py-14 lg:min-h-[calc(100dvh-151px)] lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+        <div className="min-w-0">
+          <div className="mb-5 flex items-center gap-2 text-xs font-medium text-primary">
+            <Microscope className="size-4" /> <WebText text={"MBBS Phase I · Practical Physiology"} /></div>
+          <h1 className="max-w-lg font-display text-3xl leading-tight font-semibold sm:text-4xl lg:text-5xl"><WebText text={"Physiology"} /><br className="hidden sm:block" /> <WebText text={"Practical Record"} /></h1>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base"><WebText text={"Your practical journal, from the first observation to faculty certification."} /></p>
+          <div className="relative mt-8 hidden overflow-hidden rounded-lg sm:block">
+            <img src={laboratoryImage} alt={webText("Illustrative physiology teaching laboratory with a binocular microscope")} width={1600} height={1200} className="aspect-[16/9] w-full object-cover" />
+            <span className="absolute right-3 bottom-3 rounded bg-card/90 px-2 py-1 text-[10px] text-muted-foreground"><WebText text={"Illustrative laboratory"} /></span>
           </div>
-          <div>
-            <p className="font-display text-lg font-bold leading-tight">
-              BGS Medical College Hospital
-            </p>
-            <p className="text-xs text-sidebar-muted">Department of Physiology</p>
+          <div className="mt-5 hidden items-center gap-5 text-xs text-muted-foreground sm:flex">
+            <span className="flex items-center gap-1.5"><GraduationCap className="size-4 text-primary" /> <WebText text={"Students"} /></span>
+            <span className="flex items-center gap-1.5"><ShieldCheck className="size-4 text-primary" /> <WebText text={"Faculty"} /></span>
+            <span className="flex items-center gap-1.5"><UserCog className="size-4 text-primary" /> <WebText text={"Administration"} /></span>
           </div>
         </div>
-
-        <div>
-          <p className="font-mono text-[11px] tracking-[0.2em] text-sidebar-muted uppercase">
-            MBBS Phase I • AY 2026-27
-          </p>
-          <h1 className="mt-3 font-display text-5xl leading-[1.05] font-extrabold">
-            Digital
-            <br />
-            Physiology
-            <br />
-            Practical Record
-          </h1>
-          <p className="mt-5 max-w-md text-sm text-sidebar-muted">
-            Record each experiment on the day of the session, submit it for faculty
-            review, and keep a certified digital journal across the term.
-          </p>
-        </div>
-
-        <div className="grid gap-3 text-sm sm:grid-cols-3">
-          {[
-            ["12", "Practicals mapped"],
-            ["4", "Academic batches"],
-            ["20", "Marks per record"],
-          ].map(([n, l]) => (
-            <div key={l} className="rounded-lg border border-sidebar-border p-3">
-              <p className="font-display text-2xl font-bold">{n}</p>
-              <p className="text-[11px] text-sidebar-muted">{l}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center p-6 sm:p-10">
-        <div className="w-full max-w-md">
-          <div className="mb-6 lg:hidden">
-            <p className="font-display text-xl font-bold">BGS Medical College Hospital</p>
-            <p className="text-xs text-muted-foreground">
-              Digital Physiology Practical Record
-            </p>
-          </div>
-
+        <div className="w-full min-w-0 lg:py-6">
+          <div className="mx-auto w-full max-w-md">
           {stage === "signin" ? (
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="font-display text-2xl font-bold">Welcome</h2>
+            <div className="min-w-0">
+              <div className="mb-5 flex size-11 items-center justify-center rounded-lg border border-border bg-card text-primary"><LockKeyhole className="size-5" /></div>
+              <h2 className="font-display text-3xl font-semibold"><WebText text={"Welcome back"} /></h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Sign in with your email, roll number or register number.
-              </p>
+                <WebText text={"Sign in to your practical record portal."} /></p>
 
-              <div className="mt-6 space-y-4">
-                <Field label="Email, roll or register number">
+              <form className="mt-8 space-y-5" onSubmit={(event) => { event.preventDefault(); void handleSignIn(); }}>
+                <Field label={webText("Email, roll or register number")}>
                   <input
                     type="text"
                     autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. 118, BGSMCH-2026-MED-118 or you@bgsmch.edu.in"
+                    placeholder={webText("Enter email, roll or register number")}
+                     required
+                     disabled={busy}
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Password">
+                <Field label={webText("Password")}>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder={webText("Enter your password")}
+                       autoComplete="current-password"
+                       required
+                       disabled={busy}
                       className={cn(inputClass, "pr-10")}
                     />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground"
-                      aria-label="Toggle password visibility"
+                      variant="ghost"
+                       size="icon"
+                       className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground"
+                      aria-label={showPassword ? webText("Hide password") : webText("Show password")}
+                       title={showPassword ? webText("Hide password") : webText("Show password")}
                     >
                       {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </Field>
 
-                <button
-                  onClick={handleSignIn}
+                <Button
+                  type="submit"
                   disabled={busy}
-                  className="flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                  Sign In
-                </button>
+                  <WebText text={"Sign In"} /><ArrowRight className="size-4" />
+                </Button>
 
 
                 <p className="pt-2 text-center text-sm text-muted-foreground">
-                  New student?{" "}
-                  <button
-                    onClick={() => setStage("register")}
-                    className="font-semibold text-primary hover:underline"
+                  <WebText text={"New student?"} />{webText(" ")}
+                  <Button
+                    type="button"
+                     variant="link"
+                     onClick={() => setStage("register")}
+                    className="h-auto px-0 font-semibold text-primary hover:underline"
                   >
-                    Create an account
-                  </button>
+                    <WebText text={"Create an account"} /></Button>
                 </p>
-              </div>
+              </form>
             </div>
           ) : null}
 
           {stage === "register" ? (
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <button
+            <div className="min-w-0">
+              <Button
                 onClick={() => setStage("signin")}
                 className="mb-3 flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"
               >
-                <ArrowLeft className="size-3.5" /> Back to sign in
-              </button>
-              <h2 className="font-display text-2xl font-bold">Student Registration</h2>
+                <ArrowLeft className="size-3.5" /> <WebText text={"Back to sign in"} /></Button>
+              <h2 className="font-display text-2xl font-bold"><WebText text={"Student Registration"} /></h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Your details are matched to your batch and practical roster.
-              </p>
+                <WebText text={"Your details are matched to your batch and practical roster."} /></p>
 
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <Field label="Full name" className="sm:col-span-2">
+                <Field label={webText("Full name")} className="sm:col-span-2">
                   <input
                     value={form.full_name}
                     onChange={(e) => setForm({ ...form, full_name: e.target.value })}
                     className={inputClass}
-                    placeholder="Ananya Sharma"
+                    placeholder={webText("Ananya Sharma")}
                   />
                 </Field>
-                <Field label="Email" className="sm:col-span-2">
+                <Field label={webText("Email")} className="sm:col-span-2">
                   <input
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     className={inputClass}
-                    placeholder="you@bgsmch.edu.in"
+                    placeholder={webText("you@bgsmch.edu.in")}
                   />
                 </Field>
-                <Field label="Roll number">
+                <Field label={webText("Roll number")}>
                   <input
                     value={form.roll_number}
                     onChange={(e) => setForm({ ...form, roll_number: e.target.value })}
                     className={inputClass}
-                    placeholder="118"
+                    placeholder={webText("118")}
                   />
                 </Field>
-                <Field label="Register number">
+                <Field label={webText("Register number")}>
                   <input
                     value={form.register_number}
                     onChange={(e) => setForm({ ...form, register_number: e.target.value })}
                     className={inputClass}
-                    placeholder="BGSMCH-2026-MED-118"
+                    placeholder={webText("BGSMCH-2026-MED-118")}
                   />
                 </Field>
-                <Field label="Phone">
+                <Field label={webText("Phone")}>
                   <input
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
                     className={inputClass}
-                    placeholder="+91 90000 00000"
+                    placeholder={webText("+91 90000 00000")}
                   />
                 </Field>
-                <Field label="Admission year">
+                <Field label={webText("Admission year")}>
                   <input
                     value={form.admission_year}
                     onChange={(e) => setForm({ ...form, admission_year: e.target.value })}
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Batch" className="sm:col-span-2">
+                <Field label={webText("Batch")} className="sm:col-span-2">
                   <select
                     value={form.batch_id}
                     onChange={(e) => setForm({ ...form, batch_id: e.target.value })}
                     className={inputClass}
                   >
-                    <option value="BATCH-A1">Batch A1 (AY 2026-27)</option>
-                    <option value="BATCH-A2">Batch A2 (AY 2026-27)</option>
-                    <option value="BATCH-B1">Batch B1 (AY 2026-27)</option>
-                    <option value="BATCH-B2">Batch B2 (AY 2026-27)</option>
+                    <option value="BATCH-A1"><WebText text={"Batch A1 (AY 2026-27)"} /></option>
+                    <option value="BATCH-A2"><WebText text={"Batch A2 (AY 2026-27)"} /></option>
+                    <option value="BATCH-B1"><WebText text={"Batch B1 (AY 2026-27)"} /></option>
+                    <option value="BATCH-B2"><WebText text={"Batch B2 (AY 2026-27)"} /></option>
                   </select>
                 </Field>
-                <Field label="Password" className="sm:col-span-2">
+                <Field label={webText("Password")} className="sm:col-span-2">
                   <input
                     type="password"
                     value={form.password}
@@ -391,7 +384,7 @@ function LoginPage() {
                     className={inputClass}
                   />
                 </Field>
-                <Field label="Confirm password" className="sm:col-span-2">
+                <Field label={webText("Confirm password")} className="sm:col-span-2">
                   <input
                     type="password"
                     value={form.confirmPassword}
@@ -401,9 +394,8 @@ function LoginPage() {
                 </Field>
 
                 <div className="sm:col-span-2">
-                  <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Password requirements
-                  </p>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">
+                    <WebText text={"Password requirements"} /></p>
                   <ul className="grid gap-1.5 sm:grid-cols-2">
                     {RULES.map((r) => {
                       const ok = r.test(form.password);
@@ -423,7 +415,7 @@ function LoginPage() {
                           >
                             {ok ? <Check className="size-3" /> : null}
                           </span>
-                          {r.label}
+                          {webText(r.label)}
                         </li>
                       );
                     })}
@@ -431,65 +423,65 @@ function LoginPage() {
                 </div>
               </div>
 
-              <button
+              <Button
                 onClick={handleRegister}
                 disabled={busy}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                Create Account
-              </button>
+                <WebText text={"Create Account"} /></Button>
             </div>
           ) : null}
 
           {stage === "role" ? (
-            <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <h2 className="font-display text-2xl font-bold">Select Your Role</h2>
+            <div className="min-w-0">
+              <h2 className="font-display text-2xl font-bold"><WebText text={"Select Your Role"} /></h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                This is set once for the account and decides which console you see.
-              </p>
+                <WebText text={"This is set once for the account and decides which console you see."} /></p>
               <div className="mt-5 grid gap-3">
                 <RoleCard
                   icon={GraduationCap}
-                  title="Student"
-                  copy="Record and submit your physiology practicals."
+                  title={webText("Student")}
+                  copy={webText("Record and submit your physiology practicals.")}
                   active={roleChoice === "student"}
                   onClick={() => setRoleChoice("student")}
                 />
                 <RoleCard
                   icon={ShieldCheck}
-                  title="Faculty"
-                  copy="Faculty access is granted by a department administrator."
+                  title={webText("Faculty")}
+                  copy={webText("Faculty access is granted by a department administrator.")}
                   active={false}
                   disabled
                   onClick={() => undefined}
                 />
                 <RoleCard
                   icon={UserCog}
-                  title="Administrator"
-                  copy="Managed by the department — request access from an existing administrator."
+                  title={webText("Administrator")}
+                  copy={webText("Managed by the department — request access from an existing administrator.")}
                   active={false}
                   disabled
                   onClick={() => undefined}
                 />
               </div>
-              <button
+              <Button
                 onClick={() => handleClaim(roleChoice)}
                 disabled={busy || roleChoice === "admin"}
                 className="mt-5 w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                Continue as {roleChoice === "faculty" ? "Faculty" : "Student"}
-              </button>
+                <WebText text={"Continue as"} />{roleChoice === "faculty" ? webText("Faculty") : webText("Student")}
+              </Button>
             </div>
           ) : null}
         </div>
       </div>
+      </main>
+      <footer className="border-t border-border px-5 py-5 text-center text-xs text-muted-foreground"><WebText text={"BGS Medical College Hospital · Department of Physiology"} /></footer>
     </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+  "w-full rounded-md border border-border bg-card px-4 py-3 text-base outline-none focus:ring-2 focus:ring-ring";
 
 function Field({
   label,
@@ -500,10 +492,11 @@ function Field({
   children: React.ReactNode;
   className?: string;
 }) {
+  const webText = useWebText();
   return (
     <label className={cn("block", className)}>
-      <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        {label}
+      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+        {webText(label)}
       </span>
       {children}
     </label>
@@ -525,8 +518,9 @@ function RoleCard({
   disabled?: boolean;
   onClick: () => void;
 }) {
+  const webText = useWebText();
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
       disabled={disabled}
@@ -538,9 +532,9 @@ function RoleCard({
     >
       <Icon className="mt-0.5 size-5 shrink-0 text-primary" />
       <span>
-        <span className="block font-display text-sm font-bold">{title}</span>
+        <span className="block font-display text-sm font-bold">{webText(title)}</span>
         <span className="mt-0.5 block text-xs text-muted-foreground">{copy}</span>
       </span>
-    </button>
+    </Button>
   );
 }

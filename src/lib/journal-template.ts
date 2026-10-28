@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { DEFAULT_PRACTICAL_MARKS } from "@/lib/assessment";
 
 export type JournalTemplate = Omit<Tables<"practical_templates">, "columns" | "viva_questions" | "observation_rows"> & {
   columns: { label: string; type: string; unit: string; validation: string }[];
@@ -13,7 +14,7 @@ export function emptyTemplate(practical?: { code: string; seq: number; title: st
   return {
     code: practical?.code ?? "", seq: practical?.seq ?? 1, title: practical?.title ?? "", category: practical?.category ?? "Hematology", type: practical?.type ?? "Experiment",
     aim: "", principle: "", apparatus: "", procedure: "", formula: "", inference: "", reference_image: "", reference_caption: "",
-    columns: [], observation_rows: [], viva_questions: [], author: "", version: "v1.0", status: "Draft", max_marks: 20, penalty: 5,
+    columns: [], observation_rows: [], viva_questions: [], author: "", version: "v1.0", status: "Draft", max_marks: DEFAULT_PRACTICAL_MARKS, penalty: 0,
     req_diagram: true, req_calculations: true, req_viva: true, updated_at: "",
   };
 }

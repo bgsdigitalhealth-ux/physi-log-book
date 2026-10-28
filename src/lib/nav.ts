@@ -19,6 +19,7 @@ import {
   TrendingUp,
   User,
   UserCog,
+  PencilLine,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -61,6 +62,7 @@ export const facultyNav: NavItem[] = [
 ];
 
 export const adminNav: NavItem[] = [
+  { id: "edit-web", label: "Edit web", icon: PencilLine },
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "manage-users", label: "Manage Users", icon: UserCog },
   { id: "manage-batches", label: "Manage Batches", icon: Users },

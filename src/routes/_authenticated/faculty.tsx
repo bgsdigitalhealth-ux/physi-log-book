@@ -1,3 +1,4 @@
+import { WebText, useWebText } from "@/components/website-content";
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -7,7 +8,7 @@ import {
   queryOptions,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, ClipboardList, Paperclip, Send, ShieldCheck, X } from "lucide-react";
+import { Check, ClipboardList, Minus, Paperclip, Plus, Send, ShieldCheck, X } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -28,6 +29,7 @@ import { BatchManager } from "@/components/batch-manager";
 import { ProfilePhoto } from "@/components/profile-photo";
 import { VivaQuestions } from "@/components/viva-questions";
 import { Button } from "@/components/ui/button";
+import { ChangePassword } from "@/components/change-password";
 import { validateMarks } from "@/lib/assessment";
 import { submissionWindowOptions } from "@/lib/submission-window";
 
@@ -128,6 +130,7 @@ export const Route = createFileRoute("/_authenticated/faculty")({
 });
 
 function FacultyPage() {
+  const webText = useWebText();
   const [view, setView] = useState("dashboard");
   const auth = useSuspenseQuery(authContextOptions);
   const reviews = useSuspenseQuery(facultyQueryOptions.reviews());
@@ -232,47 +235,45 @@ function FacultyPage() {
         <div className="space-y-6">
           <div>
             <p className="font-mono text-[11px] tracking-[0.16em] text-muted-foreground uppercase">
-              Department of Physiology • MBBS Phase I
-            </p>
+              <WebText text={"Department of Physiology • MBBS Phase I"} /></p>
             <h1 className="mt-1 font-display text-3xl font-extrabold">
-              Welcome, {auth.data.profile?.full_name || "Faculty"}
+              <WebText text={"Welcome,"} />{auth.data.profile?.full_name || "Faculty"}
             </h1>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Metric
-              label="Assigned Batches"
+              label={webText("Assigned Batches")}
               value={`${myBatches.length || batches.data.length}`}
-              note="Under your mentorship"
+              note={webText("Under your mentorship")}
               onClick={() => setView("my-batches")}
             />
             <Metric
-              label="Pending Reviews"
+              label={webText("Pending Reviews")}
               value={`${pending.length}`}
-              note="Submissions awaiting review"
+              note={webText("Submissions awaiting review")}
               tone="warning"
               onClick={() => setView("reviews-approvals")}
             />
             <Metric
-              label="Returned for Correction"
+              label={webText("Returned for Correction")}
               value={`${corrections.length}`}
-              note="Records returned for revision"
+              note={webText("Records returned for revision")}
               tone="danger"
               onClick={() => setView("student-records")}
             />
             <Metric
-              label="Approved & Certified"
+              label={webText("Approved & Certified")}
               value={`${approved.length}`}
-              note="Signed records"
+              note={webText("Signed records")}
               tone="success"
               onClick={() => setView("student-records")}
             />
           </div>
 
-          <Section title="Review Queue" description="Oldest submissions first.">
+          <Section title={webText("Review Queue")} description={webText("Oldest submissions first.")}>
             {pending.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nothing awaiting evaluation right now.
-              </p>
+                <WebText text={"Nothing awaiting evaluation right now."} /></p>
             ) : (
               <ul className="space-y-3">
                 {pending.slice(0, 5).map((r) => (
@@ -282,7 +283,7 @@ function FacultyPage() {
                         {byCode.get(r.practical_code)?.title ?? r.practical_code}
                       </span>
                       <span className="block text-xs text-muted-foreground">
-                        {r.profiles?.full_name} • Roll {r.profiles?.roll_number ?? "—"}
+                        {r.profiles?.full_name} <WebText text={"• Roll"} />{r.profiles?.roll_number ?? "—"}
                       </span>
                     </span>
                     <StatusBadge status={r.status} />
@@ -290,8 +291,7 @@ function FacultyPage() {
                       onClick={() => setView("reviews-approvals")}
                       className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                     >
-                      Open
-                    </button>
+                      <WebText text={"Open"} /></button>
                   </li>
                 ))}
               </ul>
@@ -329,7 +329,7 @@ function FacultyPage() {
       ) : null}
 
       {view === "viva-upload" ? (
-        <Section title="Upload Viva Questions">
+        <Section title={webText("Upload Viva Questions")}>
           <VivaQuestions editable />
         </Section>
       ) : null}
@@ -339,10 +339,10 @@ function FacultyPage() {
       ) : null}
 
       {view === "notifications" ? (
-        <Section title="Notifications">
+        <Section title={webText("Notifications")}>
           <ul className="space-y-3">
             {notifications.data.length === 0 ? (
-              <li className="text-sm text-muted-foreground">No notifications yet.</li>
+              <li className="text-sm text-muted-foreground"><WebText text={"No notifications yet."} /></li>
             ) : (
               notifications.data.map((n) => (
                 <li key={n.id} className="rounded-lg border border-border p-4">
@@ -361,11 +361,12 @@ function FacultyPage() {
 }
 
 function BatchesView({ batches }: { batches: Batch[] }) {
+  const webText = useWebText();
   return (
     <BatchManager
       batches={batches}
-      title="My Assigned Batches"
-      description="Cohorts, roll ranges, lead mentors and assigned labs. You can create, edit and delete batches here."
+      title={webText("My Assigned Batches")}
+      description={webText("Cohorts, roll ranges, lead mentors and assigned labs. You can create, edit and delete batches here.")}
     />
   );
 }
@@ -377,6 +378,7 @@ function RecordsView({
   reviews: Review[];
   byCode: Map<string, { title: string; category: string }>;
 }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const auth = useSuspenseQuery(authContextOptions);
   const [editId, setEditId] = useState<string | null>(null);
@@ -399,28 +401,27 @@ function RecordsView({
   });
   return (
     <Section
-      title="Student Records Master Log"
-      description="Every practical record submitted across your batches. Enter or edit marks here."
+      title={webText("Student Records Master Log")}
+      description={webText("Every practical record submitted across your batches. Enter or edit marks here.")}
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Roll No</th>
-              <th className="py-2 pr-3">Student Name</th>
-              <th className="py-2 pr-3">Batch</th>
-              <th className="py-2 pr-3">Practical Experiment</th>
-              <th className="py-2 pr-3">Status</th>
-              <th className="py-2 pr-3">Marks</th>
-              <th className="py-2">Action</th>
+              <th className="py-2 pr-3"><WebText text={"Roll No"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Student Name"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Practical Experiment"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Status"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Marks"} /></th>
+              <th className="py-2"><WebText text={"Action"} /></th>
             </tr>
           </thead>
           <tbody>
             {reviews.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-6 text-center text-muted-foreground">
-                  No student records submitted yet.
-                </td>
+                  <WebText text={"No student records submitted yet."} /></td>
               </tr>
             ) : (
               reviews.map((r) => (
@@ -456,7 +457,7 @@ function RecordsView({
                           max={r.max_marks}
                           value={value}
                           onChange={(e) => setValue(e.target.value)}
-                          aria-label="Marks"
+                          aria-label={webText("Marks")}
                           className="w-16 rounded-md border border-border px-2 py-1 text-sm"
                         />
                         / {r.max_marks}
@@ -481,14 +482,12 @@ function RecordsView({
                           }
                           className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground disabled:opacity-60"
                         >
-                          Save
-                        </Button>
+                          <WebText text={"Save"} /></Button>
                         <Button size="sm" variant="outline"
                           onClick={() => setEditId(null)}
                           className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                         >
-                          Cancel
-                        </Button>
+                          <WebText text={"Cancel"} /></Button>
                       </span>
                     ) : (
                       <Button size="sm" variant="outline"
@@ -498,7 +497,7 @@ function RecordsView({
                         }}
                         className="rounded-md border border-border px-2.5 py-1 text-xs font-semibold hover:bg-secondary"
                       >
-                        {r.marks != null ? "Edit Marks" : "Enter Marks"}
+                        {r.marks != null ? webText("Edit Marks") : webText("Enter Marks")}
                       </Button>
                     )}
                   </td>
@@ -532,6 +531,7 @@ function ReviewQueue({
   }) => void;
   busy: boolean;
 }) {
+  const webText = useWebText();
   const queue = reviews.filter((r) => r.status === "review" || r.status === "correction");
   const [openId, setOpenId] = useState<string | null>(queue[0]?.id ?? null);
   const active = queue.find((r) => r.id === openId) ?? queue[0];
@@ -549,18 +549,16 @@ function ReviewQueue({
 
   return (
     <Section
-      title="Reviews & Approvals"
-      description="Evaluate the submitted record, assign marks and certify or return it."
+      title={webText("Reviews & Approvals")}
+      description={webText("Evaluate the submitted record, assign marks and certify or return it.")}
       actions={
         <span className="rounded-full bg-secondary px-2.5 py-1 font-mono text-[10px] tracking-wider uppercase">
-          {queue.length} Pending Reviews
-        </span>
+          {queue.length} <WebText text={"Pending Reviews"} /></span>
       }
     >
       {queue.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No submissions awaiting faculty review.
-        </p>
+          <WebText text={"No submissions awaiting faculty review."} /></p>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr]">
           <ul className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
@@ -581,7 +579,7 @@ function ReviewQueue({
                     {byCode.get(r.practical_code)?.title ?? r.practical_code}
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    {r.profiles?.full_name} • Roll {r.profiles?.roll_number ?? "—"}
+                    {r.profiles?.full_name} <WebText text={"• Roll"} />{r.profiles?.roll_number ?? "—"}
                   </span>
                 </Button>
               </li>
@@ -603,20 +601,19 @@ function ReviewQueue({
                   name={active.profiles?.full_name ?? "?"}
                   className="size-7"
                 />
-                {active.profiles?.full_name} • Roll {active.profiles?.roll_number ?? "—"} •
-                 Submitted{" "}
-                {active.submitted_at ? active.submitted_at.slice(0, 10) : "—"}
+                {active.profiles?.full_name} <WebText text={"• Roll"} />{active.profiles?.roll_number ?? "—"} <WebText text={"• Submitted"} />{webText(" ")}
+                {active.submitted_at ? active.submitted_at.slice(0, 10) : webText("—")}
               </p>
 
               <div className="mt-4 space-y-3">
                 {[['Aim', 'aim'], ['Principle', 'principle'], ['Apparatus', 'apparatus']].map(([label, field]) => (
                   <section key={field}>
-                    <h3 className="text-sm font-semibold">{label}</h3>
+                    <h3 className="text-sm font-semibold">{webText(label)}</h3>
                     <p className="mt-1 whitespace-pre-wrap break-words text-sm text-muted-foreground">{String(active.entry[field ?? ''] ?? '—')}</p>
                   </section>
                 ))}
               </div>
-              <h3 className="mt-4 text-sm font-semibold">Student Observations</h3>
+              <h3 className="mt-4 text-sm font-semibold"><WebText text={"Student Observations"} /></h3>
               <div className="mt-2 overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
@@ -641,8 +638,7 @@ function ReviewQueue({
                     {rows.length === 0 ? (
                       <tr>
                         <td className="py-3 text-muted-foreground">
-                          No observation table recorded for this submission.
-                        </td>
+                          <WebText text={"No observation table recorded for this submission."} /></td>
                       </tr>
                     ) : null}
                   </tbody>
@@ -652,8 +648,7 @@ function ReviewQueue({
               {((active.entry?.["attachments"] as { name: string; path: string }[] | undefined) ?? []).length > 0 ? (
                 <div className="mt-4">
                   <p className="mb-2 font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Student Attachments
-                  </p>
+                    <WebText text={"Student Attachments"} /></p>
                   <ul className="space-y-1.5">
                     {(active.entry["attachments"] as { name: string; path: string }[]).map((a) => (
                       <li key={a.path}>
@@ -676,40 +671,49 @@ function ReviewQueue({
               ) : null}
 
               <div className="mt-4 space-y-3">
-                <section><h3 className="text-sm font-semibold">Calculations</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{String(active.entry['calc_notes'] ?? '—')}</p></section>
-                <section><h3 className="text-sm font-semibold">Result / Inference</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{String(active.entry['inference'] ?? '—')}</p></section>
+                <section><h3 className="text-sm font-semibold"><WebText text={"Calculations"} /></h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{String(active.entry['calc_notes'] ?? '—')}</p></section>
+                <section><h3 className="text-sm font-semibold"><WebText text={"Result / Inference"} /></h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{String(active.entry['inference'] ?? '—')}</p></section>
                 {template?.viva_questions.map((question, index) => (
                   <section key={index}><h3 className="text-sm font-semibold">{question}</h3><p className="mt-1 whitespace-pre-wrap break-words text-sm">{String((active.entry['viva'] as Record<string, unknown> | undefined)?.[String(index)] ?? '—')}</p></section>
                 ))}
               </div>
               <div className="mt-5 grid gap-3 border-t border-border pt-4">
-                <h3 className="font-display text-base font-bold">Review & Assessment</h3>
-                <label className="block">
-                  <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Marks (out of {active.max_marks})
-                  </span>
+                <h3 className="font-display text-base font-bold"><WebText text={"Review & Assessment"} /></h3>
+                <div>
+                  <label htmlFor={`assessment-${active.id}`} className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
+                    <WebText text={"Marks (out of"} />{active.max_marks})
+                  </label>
+                  <div className="flex items-center gap-2">
+                  <Button variant="outline" size="icon" title={webText("Decrease marks")} aria-label={webText("Decrease marks")} disabled={busy || marks === "" || Number(marks) <= 0} onClick={() => updateDraft({ marks: String(Math.max(0, Number(marks) - 1)) })}><Minus /></Button>
                   <input
+                    id={`assessment-${active.id}`}
                     type="number"
                     min={0}
                     max={active.max_marks}
                     value={marks}
                     step={1}
                     onChange={(e) => updateDraft({ marks: e.target.value })}
-                    className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    className="w-20 rounded-md border border-border bg-background px-3 py-2 text-center text-sm outline-none focus:ring-2 focus:ring-ring"
                   />
-                </label>
+                  <Button variant="outline" size="icon" title={webText("Increase marks")} aria-label={webText("Increase marks")} disabled={busy || Number(marks) >= active.max_marks} onClick={() => updateDraft({ marks: String(Math.min(active.max_marks, Number(marks || 0) + 1)) })}><Plus /></Button>
+                  <span className="font-mono text-sm text-muted-foreground">/ {active.max_marks}</span>
+                  </div>
+                </div>
                 <label className="block">
                   <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Faculty Remarks
-                  </span>
+                    <WebText text={"Faculty Remarks"} /></span>
                   <textarea
                     rows={3}
                     value={remarks}
                     onChange={(e) => updateDraft({ remarks: e.target.value })}
                     className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                    placeholder="Comments returned to the student"
+                    placeholder={webText("Comments returned to the student")}
                   />
                 </label>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground"><WebText text={"Quick Feedback (optional)"} /></h4>
+                  <div className="flex flex-wrap gap-2">{["Good work", "Needs improvement", "Check calculations", "Label diagram clearly"].map(feedback => <Button key={feedback} size="sm" variant="outline" onClick={() => updateDraft({ remarks: remarks ? `${remarks}\n${feedback}` : feedback })}>{feedback}</Button>)}</div>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   <Button size="sm"
                     disabled={busy}
@@ -724,8 +728,7 @@ function ReviewQueue({
                       })
                     }
                   >
-                    <Check className="size-3.5" /> Approve & Save
-                  </Button>
+                    <Check className="size-3.5" /> <WebText text={"Approve & Save"} /></Button>
                   <Button size="sm" variant="outline"
                     disabled={busy}
                     onClick={() =>
@@ -740,8 +743,7 @@ function ReviewQueue({
                     }
                     className="flex items-center gap-1.5 rounded-md border border-destructive/40 px-3 py-2 text-xs font-semibold text-destructive hover:bg-destructive/5 disabled:opacity-60"
                   >
-                    <X className="size-3.5" /> Return for Correction
-                  </Button>
+                    <X className="size-3.5" /> <WebText text={"Return for Correction"} /></Button>
                 </div>
               </div>
             </div>
@@ -759,6 +761,7 @@ function FacultyAttendance({
   batches: Batch[];
   sessions: { id: string; session_date: string; topic: string; batch_id: string | null; venue: string | null }[];
 }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const [sessionId, setSessionId] = useState(sessions[0]?.id ?? "");
   const session = sessions.find((s) => s.id === sessionId);
@@ -846,14 +849,13 @@ function FacultyAttendance({
 
   return (
     <Section
-      title="Mark Lab Attendance"
-      description="Attendance against the 80% university exam eligibility threshold."
+      title={webText("Mark Lab Attendance")}
+      description={webText("Attendance against the 80% university exam eligibility threshold.")}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
           <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Session
-          </span>
+            <WebText text={"Session"} /></span>
           <select
             value={sessionId}
             onChange={(e) => setSessionId(e.target.value)}
@@ -871,8 +873,7 @@ function FacultyAttendance({
             onClick={load}
             className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
-            Load Batch Roster
-          </button>
+            <WebText text={"Load Batch Roster"} /></button>
         </div>
       </div>
 
@@ -881,10 +882,10 @@ function FacultyAttendance({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                <th className="py-2 pr-3">Roll No</th>
-                <th className="py-2 pr-3">Student Name</th>
-                <th className="py-2 pr-3">Mark</th>
-                <th className="py-2">Record Hold</th>
+                <th className="py-2 pr-3"><WebText text={"Roll No"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Student Name"} /></th>
+                <th className="py-2 pr-3"><WebText text={"Mark"} /></th>
+                <th className="py-2"><WebText text={"Record Hold"} /></th>
               </tr>
             </thead>
             <tbody>
@@ -899,8 +900,7 @@ function FacultyAttendance({
                           className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive uppercase"
                           title={s.hold_reason ?? "On hold"}
                         >
-                          On Hold
-                        </span>
+                          <WebText text={"On Hold"} /></span>
                       ) : null}
                     </span>
                   </td>
@@ -919,7 +919,7 @@ function FacultyAttendance({
                               : "border-border hover:bg-secondary",
                           )}
                         >
-                          {st}
+                          {webText(st)}
                         </button>
                       ))}
                     </div>
@@ -934,7 +934,7 @@ function FacultyAttendance({
                           : "border-destructive/40 text-destructive hover:bg-destructive/5",
                       )}
                     >
-                      {s.is_held ? "Unhold" : "Hold"}
+                      {s.is_held ? webText("Unhold") : webText("Hold")}
                     </button>
                   </td>
                 </tr>
@@ -944,12 +944,11 @@ function FacultyAttendance({
         </div>
       ) : (
         <p className="mt-4 text-sm text-muted-foreground">
-          {loading ? "Loading roster…" : "Select a session and load the batch roster to mark attendance."}
+          {loading ? webText("Loading roster…") : webText("Select a session and load the batch roster to mark attendance.")}
         </p>
       )}
       <p className="mt-3 text-xs text-muted-foreground">
-        {batches.length} academic batches are registered in the department.
-      </p>
+        {batches.length} <WebText text={"academic batches are registered in the department."} /></p>
     </Section>
   );
 }
@@ -973,11 +972,12 @@ function TemplatesView({
     viva_questions: string[];
   }[];
 }) {
+  const webText = useWebText();
   const [open, setOpen] = useState<string | null>(templates[0]?.code ?? null);
   return (
     <Section
-      title="Practical Templates"
-      description="Published experiment content, observation schemas and viva banks."
+      title={webText("Practical Templates")}
+      description={webText("Published experiment content, observation schemas and viva banks.")}
     >
       <div className="space-y-3">
         {templates.map((t) => (
@@ -1006,15 +1006,14 @@ function TemplatesView({
             </button>
             {open === t.code ? (
               <div className="space-y-3 border-t border-border p-4 text-sm">
-                <Field label="Aim" value={t.aim} />
-                <Field label="Principle" value={t.principle} />
-                <Field label="Apparatus" value={t.apparatus} />
-                <Field label="Procedure" value={t.procedure} />
-                <Field label="Formula" value={t.formula} mono />
+                <Field label={webText("Aim")} value={t.aim} />
+                <Field label={webText("Principle")} value={t.principle} />
+                <Field label={webText("Apparatus")} value={t.apparatus} />
+                <Field label={webText("Procedure")} value={t.procedure} />
+                <Field label={webText("Formula")} value={t.formula} mono />
                 <div>
                   <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-                    Viva questions
-                  </p>
+                    <WebText text={"Viva questions"} /></p>
                   <ol className="mt-1 list-decimal space-y-1 pl-5 text-xs">
                     {(t.viva_questions ?? []).map((q) => (
                       <li key={q}>{q}</li>
@@ -1022,7 +1021,7 @@ function TemplatesView({
                   </ol>
                 </div>
                 <p className="font-mono text-[11px] text-muted-foreground">
-                  Max marks {t.max_marks}
+                  <WebText text={"Max marks"} />{t.max_marks}
                 </p>
               </div>
             ) : null}
@@ -1034,10 +1033,11 @@ function TemplatesView({
 }
 
 function Field({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  const webText = useWebText();
   return (
     <div>
       <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-        {label}
+        {webText(label)}
       </p>
       <p className={cn("mt-1 whitespace-pre-line text-sm", mono && "font-mono text-xs")}>
         {value || "—"}
@@ -1061,6 +1061,7 @@ function SessionsView({
   }[];
   batches: Batch[];
 }) {
+  const webText = useWebText();
   const queryClient = useQueryClient();
   const move = useMutation({
     mutationFn: async (input: { id: string; status: string }) => {
@@ -1079,20 +1080,20 @@ function SessionsView({
 
   return (
     <Section
-      title="Practical Lab Sessions"
-      description="Schedule, faculty allocation and lab rooms across batches."
+      title={webText("Practical Lab Sessions")}
+      description={webText("Schedule, faculty allocation and lab rooms across batches.")}
     >
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-              <th className="py-2 pr-3">Session</th>
-              <th className="py-2 pr-3">Date</th>
-              <th className="py-2 pr-3">Batch</th>
-              <th className="py-2 pr-3">Practical Topic</th>
-              <th className="py-2 pr-3">Venue</th>
-              <th className="py-2 pr-3">Faculty Assigned</th>
-              <th className="py-2">Status</th>
+              <th className="py-2 pr-3"><WebText text={"Session"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Date"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Batch"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Practical Topic"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Venue"} /></th>
+              <th className="py-2 pr-3"><WebText text={"Faculty Assigned"} /></th>
+              <th className="py-2"><WebText text={"Status"} /></th>
             </tr>
           </thead>
           <tbody>
@@ -1113,7 +1114,7 @@ function SessionsView({
                     className="rounded-md border border-border bg-background px-2 py-1 text-xs"
                   >
                     {["Scheduled", "In Progress", "Completed"].map((o) => (
-                      <option key={o}>{o}</option>
+                      <option key={o} value={o}>{webText(o)}</option>
                     ))}
                   </select>
                 </td>
@@ -1133,6 +1134,7 @@ function ReportsView({
   reviews: Review[];
   practicals: { code: string; title: string; category: string }[];
 }) {
+  const webText = useWebText();
   const cats = [...new Set(practicals.map((p) => p.category))];
   const data = cats.map((c) => {
     const list = practicals.filter((p) => p.category === c);
@@ -1144,19 +1146,19 @@ function ReportsView({
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <Metric label="Submissions" value={`${reviews.length}`} />
+        <Metric label={webText("Submissions")} value={`${reviews.length}`} />
         <Metric
-          label="Certified"
+          label={webText("Certified")}
           value={`${reviews.filter((r) => r.status === "approved").length}`}
           tone="success"
         />
         <Metric
-          label="Awaiting Review"
+          label={webText("Awaiting Review")}
           value={`${reviews.filter((r) => r.status === "review").length}`}
           tone="warning"
         />
       </div>
-      <Section title="Completion by Category">
+      <Section title={webText("Completion by Category")}>
         <div className="h-72">
           <ResponsiveContainer>
             <BarChart data={data}>
@@ -1178,6 +1180,7 @@ function FacultySettings({
 }: {
   auth: { userId: string; profile: { designation: string | null; department: string | null; phone: string | null } | null };
 }) {
+  const webText = useWebText();
   const [form, setForm] = useState({
     designation: auth.profile?.designation ?? "",
     department: auth.profile?.department ?? "Department of Physiology",
@@ -1199,44 +1202,18 @@ function FacultySettings({
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const submissionWindow = useSuspenseQuery(submissionWindowOptions);
-  const [winStart, setWinStart] = useState(
-    submissionWindow.data.start_date ?? "",
-  );
-  const [winEnd, setWinEnd] = useState(submissionWindow.data.end_date ?? "");
-  const saveWindow = useMutation({
-    mutationFn: async () => {
-      if (winStart && winEnd && winEnd < winStart) {
-        throw new Error("The last date cannot be before the start date.");
-      }
-      const { error } = await supabase
-        .from("app_settings")
-        .update({
-          value: { start_date: winStart || null, end_date: winEnd || null },
-          updated_at: new Date().toISOString(),
-        })
-        .eq("key", "submission_window");
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      toast.success("Submission window saved — students can see the dates now");
-      queryClient.invalidateQueries({ queryKey: ["submission-window"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
   return (
     <div className="space-y-6">
+    <ChangePassword />
     <Section
-      title="Settings"
-      description="Your institutional profile as shown to students and administrators."
+      title={webText("Settings")}
+      description={webText("Your institutional profile as shown to students and administrators.")}
       actions={
         <button
           onClick={() => save.mutate()}
           className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
         >
-          Save Configuration
-        </button>
+          <WebText text={"Save Configuration"} /></button>
       }
     >
       <div className="grid gap-4 sm:grid-cols-2">
@@ -1247,7 +1224,7 @@ function FacultySettings({
         ] as [string, string][]).map(([label, key]) => (
           <label key={key} className="block">
             <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-              {label}
+              {webText(label)}
             </span>
             <input
               value={(form as Record<string, string>)[key] ?? ""}
@@ -1258,53 +1235,7 @@ function FacultySettings({
         ))}
       </div>
       <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-        <ShieldCheck className="size-3.5" /> Grading authority is granted by the
-        department administration and cannot be changed from this screen.
-      </p>
-    </Section>
-
-    <Section
-      title="Record Submission Window"
-      description="Set the start and last date during which students can submit practical records for review."
-      actions={
-        <button
-          onClick={() => saveWindow.mutate()}
-          disabled={saveWindow.isPending}
-          className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
-        >
-          Save Dates
-        </button>
-      }
-    >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Submission Start Date
-          </span>
-          <input
-            type="date"
-            value={winStart}
-            onChange={(e) => setWinStart(e.target.value)}
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
-            Last Date of Submission
-          </span>
-          <input
-            type="date"
-            value={winEnd}
-            onChange={(e) => setWinEnd(e.target.value)}
-            className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
-      </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Outside this window students can still save drafts, but the
-        &quot;Submit for Review&quot; action stays disabled. Leave both blank to
-        keep submissions always open.
-      </p>
+        <ShieldCheck className="size-3.5" /> <WebText text={"Grading authority is granted by the department administration and cannot be changed from this screen."} /></p>
     </Section>
     </div>
   );
