@@ -1,0 +1,111 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792995269636,
+      "tag": "0000_create_physiology_core_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792995391255,
+      "tag": "0001_add_practical_templates_and_profile_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792996863707,
+      "tag": "0002_add_find_login_email_function",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793003736313,
+      "tag": "0003_expand_journal_template_editor",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793003905469,
+      "tag": "0004_restrict_self_service_staff_roles",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793004877889,
+      "tag": "0005_submission_attachment_storage_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793005728580,
+      "tag": "0006_student_holds_profile_photo_submission_window",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793005755253,
+      "tag": "0007_profile_photos_read_policy",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793007072230,
+      "tag": "0008_enable_realtime_portal_sync",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793008050446,
+      "tag": "0009_student_growth_rank",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793008918401,
+      "tag": "0010_faculty_manage_batches",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793011142290,
+      "tag": "0011_faculty_cannot_read_other_faculty",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793095578919,
+      "tag": "0012_viva_question_bank",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793158701688,
+      "tag": "0013_journal_assessment_default_five",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793178458271,
+      "tag": "0014_admin_website_content",
+      "breakpoints": true
+    }
+  ]
+}
